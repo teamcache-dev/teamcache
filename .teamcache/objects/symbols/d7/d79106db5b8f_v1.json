@@ -1,0 +1,15 @@
+{
+  "cache_key": "d79106db5b8f07ab4ab501358e080e489f6774e4e79b6327f01813d017803eaf",
+  "file_path": ".githooks/post-merge",
+  "file_hash": "4c4ac2a49fbfb976826cc4be5d2ba586be174507b0e591e48f90943c96fcfbb7",
+  "schema_version": "v1",
+  "language": "unknown",
+  "symbols": {
+    "functions": [],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "created_at": "2026-05-31T03:57:29.364358Z",
+  "created_by": "unknown"
+}

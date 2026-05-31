@@ -1,0 +1,64 @@
+{
+  "cache_key": "68748bfaf6086f0250076f92a32e8d9c82c8f1e87c5897c649a1a48165422ff9",
+  "file_path": "teamcache/mcp_server.py",
+  "file_hash": "5c0aaf3f71afd64834950fbf4b0ff9472c6fe38b0337c924c870fb6934515679",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "run_server",
+        "line": 42,
+        "signature": "def run_server() -> None:"
+      },
+      {
+        "name": "_repo_overview",
+        "line": 274,
+        "signature": "def _repo_overview(repo_root: Path, conn: Any) -> str:"
+      },
+      {
+        "name": "_repo_scan",
+        "line": 299,
+        "signature": "def _repo_scan(repo_root: Path) -> tuple[str, dict[str, int]]:"
+      },
+      {
+        "name": "_semantic_results",
+        "line": 323,
+        "signature": "def _semantic_results("
+      },
+      {
+        "name": "_merge_relevance_results",
+        "line": 345,
+        "signature": "def _merge_relevance_results("
+      },
+      {
+        "name": "_symbol_line",
+        "line": 367,
+        "signature": "def _symbol_line(symbols: dict[str, Any], symbol_name: str) -> int | None:"
+      },
+      {
+        "name": "_sanitize_path",
+        "line": 383,
+        "signature": "def _sanitize_path("
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "os",
+      "subprocess",
+      "datetime",
+      "pathlib",
+      "typing",
+      "mcp.server.fastmcp",
+      ".config",
+      ".constants",
+      ".db",
+      ".embeddings",
+      ".files",
+      ".secrets"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-05-31T03:57:29.386494Z",
+  "created_by": "unknown"
+}

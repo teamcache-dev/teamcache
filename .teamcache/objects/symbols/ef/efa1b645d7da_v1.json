@@ -1,0 +1,210 @@
+{
+  "cache_key": "efa1b645d7daf6f1339b92d146c8e900f2f1b3cf2df7dad0ad424bcabed55c42",
+  "file_path": "teamcache/cli.py",
+  "file_hash": "36cfb8245ab0314dd6bee73656ff5a7ad49178a60db2cc2906420b1792a1e528",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "cli",
+        "line": 61,
+        "signature": "def cli() -> None:"
+      },
+      {
+        "name": "init",
+        "line": 66,
+        "signature": "def init() -> None:"
+      },
+      {
+        "name": "index",
+        "line": 97,
+        "signature": "def index() -> None:"
+      },
+      {
+        "name": "changed",
+        "line": 136,
+        "signature": "def changed(since_branch: str) -> None:"
+      },
+      {
+        "name": "sync",
+        "line": 181,
+        "signature": "def sync(quiet: bool) -> None:"
+      },
+      {
+        "name": "invalidate",
+        "line": 202,
+        "signature": "def invalidate(files: tuple[str, ...], stale: bool, all_entries: bool, quiet: bool) -> None:"
+      },
+      {
+        "name": "stats",
+        "line": 232,
+        "signature": "def stats() -> None:"
+      },
+      {
+        "name": "report",
+        "line": 273,
+        "signature": "def report() -> None:"
+      },
+      {
+        "name": "commit",
+        "line": 340,
+        "signature": "def commit() -> None:"
+      },
+      {
+        "name": "serve",
+        "line": 374,
+        "signature": "def serve() -> None:"
+      },
+      {
+        "name": "install",
+        "line": 391,
+        "signature": "def install(agent: str) -> None:"
+      },
+      {
+        "name": "uninstall",
+        "line": 409,
+        "signature": "def uninstall(agent: str) -> None:"
+      },
+      {
+        "name": "_resolve_teamcache_bin",
+        "line": 418,
+        "signature": "def _resolve_teamcache_bin() -> Path:"
+      },
+      {
+        "name": "_agent_install",
+        "line": 438,
+        "signature": "def _agent_install(agent: str, repo_root: Path, teamcache_bin: Path) -> None:"
+      },
+      {
+        "name": "_agent_uninstall",
+        "line": 504,
+        "signature": "def _agent_uninstall(agent: str, repo_root: Path) -> None:"
+      },
+      {
+        "name": "_write_mcp_json",
+        "line": 580,
+        "signature": "def _write_mcp_json(config_path: Path, teamcache_bin: str) -> None:"
+      },
+      {
+        "name": "_remove_mcp_json",
+        "line": 594,
+        "signature": "def _remove_mcp_json(config_path: Path) -> None:"
+      },
+      {
+        "name": "_append_instructions_block",
+        "line": 606,
+        "signature": "def _append_instructions_block(path: Path, block: str, sentinel: str) -> None:"
+      },
+      {
+        "name": "_remove_instructions_block",
+        "line": 623,
+        "signature": "def _remove_instructions_block(path: Path, sentinel: str) -> None:"
+      },
+      {
+        "name": "_write_aider_config",
+        "line": 641,
+        "signature": "def _write_aider_config(config_path: Path, instructions_rel: str) -> None:"
+      },
+      {
+        "name": "_remove_aider_config",
+        "line": 655,
+        "signature": "def _remove_aider_config(config_path: Path, instructions_rel: str) -> None:"
+      },
+      {
+        "name": "_index_file",
+        "line": 664,
+        "signature": "def _index_file("
+      },
+      {
+        "name": "_read_summary_object",
+        "line": 753,
+        "signature": "def _read_summary_object(summaries_root: Path, key: str) -> dict[str, object] | None:"
+      },
+      {
+        "name": "_read_symbol_object",
+        "line": 767,
+        "signature": "def _read_symbol_object(symbols_root: Path, key: str) -> dict[str, object] | None:"
+      },
+      {
+        "name": "_summary_object_for_path",
+        "line": 781,
+        "signature": "def _summary_object_for_path("
+      },
+      {
+        "name": "_symbol_object_for_path",
+        "line": 798,
+        "signature": "def _symbol_object_for_path("
+      },
+      {
+        "name": "_write_repomap",
+        "line": 813,
+        "signature": "def _write_repomap(root: Path) -> None:"
+      },
+      {
+        "name": "_module_aliases",
+        "line": 865,
+        "signature": "def _module_aliases(file_path: str) -> list[str]:"
+      },
+      {
+        "name": "_import_lookup_keys",
+        "line": 876,
+        "signature": "def _import_lookup_keys(import_name: str) -> list[str]:"
+      },
+      {
+        "name": "_install_post_merge_hook",
+        "line": 899,
+        "signature": "def _install_post_merge_hook(repo_root: Path) -> bool:"
+      },
+      {
+        "name": "_install_post_commit_hook",
+        "line": 952,
+        "signature": "def _install_post_commit_hook(repo_root: Path) -> bool:"
+      },
+      {
+        "name": "_first_warning_line",
+        "line": 975,
+        "signature": "def _first_warning_line(detail: str) -> str:"
+      },
+      {
+        "name": "_ensure_gitignore_entry",
+        "line": 983,
+        "signature": "def _ensure_gitignore_entry(path: Path, entry: str) -> None:"
+      },
+      {
+        "name": "_append_claude_instructions",
+        "line": 1005,
+        "signature": "def _append_claude_instructions(path: Path) -> None:"
+      },
+      {
+        "name": "_atomic_write_text",
+        "line": 1038,
+        "signature": "def _atomic_write_text(path: Path, content: str) -> None:"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "os",
+      "shutil",
+      "subprocess",
+      "sys",
+      "json",
+      "collections",
+      "datetime",
+      "pathlib",
+      "click",
+      "rich.console",
+      "rich.markup",
+      "rich.progress",
+      ".config",
+      ".constants",
+      ".db",
+      ".embeddings",
+      ".files",
+      ".symbols"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-05-31T03:57:29.394387Z",
+  "created_by": "unknown"
+}

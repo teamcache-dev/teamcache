@@ -1,0 +1,28 @@
+{
+  "cache_key": "ea3e42690d26eb0aa04334ca31989b7c1e30df245fe49a35038a421833bd3a17",
+  "file_path": "teamcache/secrets.py",
+  "file_hash": "d7df7cf7891aeb43f7932729399a3fbc8cacb35b3b59fd96372a696cf1776487",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "contains_secret",
+        "line": 82,
+        "signature": "def contains_secret(text: str) -> bool:"
+      },
+      {
+        "name": "first_match",
+        "line": 90,
+        "signature": "def first_match(text: str) -> str | None:"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "re"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-05-31T03:57:29.402840Z",
+  "created_by": "unknown"
+}

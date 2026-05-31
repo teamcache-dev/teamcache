@@ -1,0 +1,41 @@
+{
+  "cache_key": "056a1cdacee258416c202b737a07d54f035bea2559af94251d28094761420515",
+  "file_path": "teamcache/embeddings.py",
+  "file_hash": "37d3311c0678ce1258e70bb5063086ad7617720929f2079d7cd4307c338bdc21",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "connect_embeddings",
+        "line": 12,
+        "signature": "def connect_embeddings(db_path: Path) -> sqlite3.Connection:"
+      },
+      {
+        "name": "get_model",
+        "line": 32,
+        "signature": "def get_model() -> Any | None:"
+      },
+      {
+        "name": "upsert_embedding",
+        "line": 63,
+        "signature": "def upsert_embedding("
+      },
+      {
+        "name": "semantic_search",
+        "line": 100,
+        "signature": "def semantic_search(conn: sqlite3.Connection, query: str, limit: int = 5) -> list[dict[str, Any]]:"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "sqlite3",
+      "datetime",
+      "pathlib",
+      "typing"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-05-31T03:57:29.382047Z",
+  "created_by": "unknown"
+}

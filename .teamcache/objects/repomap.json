@@ -1,13 +1,15 @@
 {
   "schema_version": "v1",
-  "generated_at": "2026-05-30T21:04:48.384068Z",
-  "total_files": 29,
+  "generated_at": "2026-05-31T03:57:29.411600Z",
+  "total_files": 52,
   "languages": {
-    "json": 1,
-    "markdown": 1,
-    "python": 24,
-    "toml": 1,
-    "unknown": 2
+    "javascript": 1,
+    "json": 3,
+    "markdown": 2,
+    "python": 35,
+    "toml": 2,
+    "unknown": 5,
+    "yaml": 4
   },
   "entry_points": [],
   "top_symbols": [
@@ -37,6 +39,16 @@
       "language": "python"
     },
     {
+      "name": ".symbols",
+      "file_path": "teamcache/symbols.py",
+      "language": "python"
+    },
+    {
+      "name": ".search",
+      "file_path": "teamcache/search.py",
+      "language": "python"
+    },
+    {
       "name": "connect",
       "file_path": "teamcache/db.py",
       "language": "python"
@@ -52,8 +64,8 @@
       "language": "python"
     },
     {
-      "name": ".symbols",
-      "file_path": "teamcache/symbols.py",
+      "name": "static_summary",
+      "file_path": "teamcache/files.py",
       "language": "python"
     },
     {
@@ -62,12 +74,17 @@
       "language": "python"
     },
     {
-      "name": ".search",
-      "file_path": "teamcache/search.py",
+      "name": "teamcache.db",
+      "file_path": "teamcache/db.py",
       "language": "python"
     },
     {
-      "name": "static_summary",
+      "name": "cli",
+      "file_path": "teamcache/cli.py",
+      "language": "python"
+    },
+    {
+      "name": "teamcache.files",
       "file_path": "teamcache/files.py",
       "language": "python"
     },
@@ -77,13 +94,23 @@
       "language": "python"
     },
     {
-      "name": "find_repo_root",
-      "file_path": "teamcache/config.py",
+      "name": "teamcache.secrets",
+      "file_path": "teamcache/secrets.py",
       "language": "python"
     },
     {
-      "name": "cli",
+      "name": ".secrets",
+      "file_path": "teamcache/secrets.py",
+      "language": "python"
+    },
+    {
+      "name": "teamcache.cli",
       "file_path": "teamcache/cli.py",
+      "language": "python"
+    },
+    {
+      "name": "find_repo_root",
+      "file_path": "teamcache/config.py",
       "language": "python"
     }
   ]

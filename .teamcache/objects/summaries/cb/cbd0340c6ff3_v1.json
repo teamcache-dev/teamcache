@@ -1,0 +1,12 @@
+{
+  "cache_key": "cbd0340c6ff31005263b0a578fe6d064a3c2af713575e8f3f28fb120ff4966f4",
+  "file_path": "tests/test_files.py",
+  "file_hash": "a57ef54380c17ef246d3d475cbb36d6d4012f525b6865ef1d2a86c11948db989",
+  "summary": "imports: hashlib, pathlib, pytest, teamcache.files | functions: test_file_hash_is_sha256, test_cache_key_formula, test_cache_key_changes_with_schema_version, test_is_binary_content_null_byte, test_is_binary_content_clean_text, test_is_binary_content_by_extension, test_should_skip_metadata_lock_file, test_should_skip_metadata_large_file, test_should_skip_metadata_normal_file",
+  "summary_type": "static",
+  "schema_version": "v1",
+  "created_at": "2026-05-31T03:57:29.356721Z",
+  "created_by": "unknown",
+  "file_size_bytes": 1649,
+  "language": "python"
+}
