@@ -1,0 +1,137 @@
+{
+  "cache_key": "224629d5e3ce8dca3e80946c9c2219874a5416fad9db4cb54e7b9fbcd78bfe47",
+  "file_path": "tests/test_file_indexing.py",
+  "file_hash": "e4559dc1df32db757b92225ad34988aab27ca22fa01a6c64a37c6f73b3cc2149",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "_git",
+        "line": null,
+        "signature": "_git"
+      },
+      {
+        "name": "_rel_names",
+        "line": null,
+        "signature": "_rel_names"
+      },
+      {
+        "name": "tmp_git_repo",
+        "line": null,
+        "signature": "tmp_git_repo"
+      },
+      {
+        "name": "test_is_sensitive_path_env",
+        "line": null,
+        "signature": "test_is_sensitive_path_env"
+      },
+      {
+        "name": "test_is_sensitive_path_env_local",
+        "line": null,
+        "signature": "test_is_sensitive_path_env_local"
+      },
+      {
+        "name": "test_is_sensitive_path_env_production",
+        "line": null,
+        "signature": "test_is_sensitive_path_env_production"
+      },
+      {
+        "name": "test_is_sensitive_path_src_env",
+        "line": null,
+        "signature": "test_is_sensitive_path_src_env"
+      },
+      {
+        "name": "test_is_sensitive_path_pem",
+        "line": null,
+        "signature": "test_is_sensitive_path_pem"
+      },
+      {
+        "name": "test_is_sensitive_path_key",
+        "line": null,
+        "signature": "test_is_sensitive_path_key"
+      },
+      {
+        "name": "test_is_sensitive_path_id_rsa",
+        "line": null,
+        "signature": "test_is_sensitive_path_id_rsa"
+      },
+      {
+        "name": "test_is_sensitive_path_id_ed25519",
+        "line": null,
+        "signature": "test_is_sensitive_path_id_ed25519"
+      },
+      {
+        "name": "test_is_sensitive_path_ssh_dir",
+        "line": null,
+        "signature": "test_is_sensitive_path_ssh_dir"
+      },
+      {
+        "name": "test_is_sensitive_path_netrc",
+        "line": null,
+        "signature": "test_is_sensitive_path_netrc"
+      },
+      {
+        "name": "test_is_sensitive_path_npmrc",
+        "line": null,
+        "signature": "test_is_sensitive_path_npmrc"
+      },
+      {
+        "name": "test_is_sensitive_path_normal_py",
+        "line": null,
+        "signature": "test_is_sensitive_path_normal_py"
+      },
+      {
+        "name": "test_is_sensitive_path_config_py",
+        "line": null,
+        "signature": "test_is_sensitive_path_config_py"
+      },
+      {
+        "name": "test_no_git_repo_returns_empty_iterator",
+        "line": null,
+        "signature": "test_no_git_repo_returns_empty_iterator"
+      },
+      {
+        "name": "test_teamcacheignore_patterns",
+        "line": null,
+        "signature": "test_teamcacheignore_patterns"
+      },
+      {
+        "name": "test_dotenv_gitignored_not_indexed",
+        "line": null,
+        "signature": "test_dotenv_gitignored_not_indexed"
+      },
+      {
+        "name": "test_dotenv_tracked_blocked_by_denylist",
+        "line": null,
+        "signature": "test_dotenv_tracked_blocked_by_denylist"
+      },
+      {
+        "name": "test_untracked_file_not_indexed",
+        "line": null,
+        "signature": "test_untracked_file_not_indexed"
+      },
+      {
+        "name": "test_teamcacheignore_excludes_file",
+        "line": null,
+        "signature": "test_teamcacheignore_excludes_file"
+      },
+      {
+        "name": "test_filename_with_spaces_is_indexed",
+        "line": null,
+        "signature": "test_filename_with_spaces_is_indexed"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "subprocess",
+      "pytest",
+      "__future__",
+      "pathlib",
+      "teamcache.files"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-05-31T10:17:43.964200Z",
+  "created_by": "unknown"
+}

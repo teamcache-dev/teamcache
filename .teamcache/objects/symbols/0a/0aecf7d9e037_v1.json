@@ -1,0 +1,75 @@
+{
+  "cache_key": "0aecf7d9e037be5d4d6f67cb278944c91f1f5c9bd679610f8e03584a60a39c11",
+  "file_path": "teamcache/mcp_server.py",
+  "file_hash": "44431d95e41fa1633298f95bebd18298100ac48d90d23e8278b0146ede0cb28a",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "run_server",
+        "line": null,
+        "signature": "run_server"
+      },
+      {
+        "name": "_summary_confidence",
+        "line": null,
+        "signature": "_summary_confidence"
+      },
+      {
+        "name": "_repo_overview",
+        "line": null,
+        "signature": "_repo_overview"
+      },
+      {
+        "name": "_repo_scan",
+        "line": null,
+        "signature": "_repo_scan"
+      },
+      {
+        "name": "_language_counts_from_walk",
+        "line": null,
+        "signature": "_language_counts_from_walk"
+      },
+      {
+        "name": "_semantic_results",
+        "line": null,
+        "signature": "_semantic_results"
+      },
+      {
+        "name": "_merge_relevance_results",
+        "line": null,
+        "signature": "_merge_relevance_results"
+      },
+      {
+        "name": "_symbol_line",
+        "line": null,
+        "signature": "_symbol_line"
+      },
+      {
+        "name": "_sanitize_path",
+        "line": null,
+        "signature": "_sanitize_path"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "os",
+      "subprocess",
+      "__future__",
+      "datetime",
+      "pathlib",
+      "typing",
+      "mcp.server.fastmcp",
+      ".config",
+      ".constants",
+      ".db",
+      ".embeddings",
+      ".files",
+      ".secrets"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-05-31T10:17:43.980753Z",
+  "created_by": "unknown"
+}

@@ -1,0 +1,12 @@
+{
+  "cache_key": "115ffbdc607ceed9ee23f7ca7a8033e50eb303195e8d0381df6bff902c603071",
+  "file_path": "teamcache/db.py",
+  "file_hash": "658c9c844a11678d7e03791c51109108b9145598095012309fe3ac19022a1e19",
+  "summary": "imports: json, sqlite3, sys, __future__, datetime, pathlib, typing, .search | functions: connect, _migrate_add_last_accessed, insert_summary, get_summary, get_summary_by_path, keyword_search, rebuild_from_objects, optimize_fts, count_by_type, insert_symbol, get_symbol, get_symbol_by_path, find_symbol_by_name, rebuild_symbols, invalidate_by_path, invalidate_stale, invalidate_all, summary_count, symbol_count, coverage_stats, top_contributors, static_only_files, _symbol_row_to_dict, _symbol_names",
+  "summary_type": "static",
+  "schema_version": "v1",
+  "created_at": "2026-05-31T10:17:43.974083Z",
+  "created_by": "unknown",
+  "file_size_bytes": 17112,
+  "language": "python"
+}

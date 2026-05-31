@@ -1,0 +1,52 @@
+{
+  "cache_key": "b890fce151f0a85696089f2b7adac070cfe8e8ac6141c921471012e5959b8e21",
+  "file_path": "tests/test_config.py",
+  "file_hash": "cb7174b3e7b077c23d696682c302e612477d4c73f07d656555420981bae810ba",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "repo_root",
+        "line": null,
+        "signature": "repo_root"
+      },
+      {
+        "name": "_write_raw_config",
+        "line": null,
+        "signature": "_write_raw_config"
+      },
+      {
+        "name": "test_load_config_old_format_uses_defaults",
+        "line": null,
+        "signature": "test_load_config_old_format_uses_defaults"
+      },
+      {
+        "name": "test_config_roundtrip",
+        "line": null,
+        "signature": "test_config_roundtrip"
+      },
+      {
+        "name": "test_config_sensitive_path_denylist",
+        "line": null,
+        "signature": "test_config_sensitive_path_denylist"
+      },
+      {
+        "name": "test_config_defaults_no_file",
+        "line": null,
+        "signature": "test_config_defaults_no_file"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "pytest",
+      "yaml",
+      "__future__",
+      "pathlib",
+      "teamcache.config"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-05-31T10:17:43.960065Z",
+  "created_by": "unknown"
+}

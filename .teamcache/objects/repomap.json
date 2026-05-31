@@ -1,12 +1,12 @@
 {
   "schema_version": "v1",
-  "generated_at": "2026-05-31T05:18:55.996634Z",
-  "total_files": 66,
+  "generated_at": "2026-05-31T10:17:44.011124Z",
+  "total_files": 84,
   "languages": {
     "javascript": 1,
     "json": 6,
-    "markdown": 2,
-    "python": 38,
+    "markdown": 6,
+    "python": 52,
     "toml": 3,
     "unknown": 6,
     "yaml": 10
@@ -19,13 +19,13 @@
       "language": "python"
     },
     {
-      "name": ".config",
-      "file_path": "teamcache/config.py",
+      "name": ".constants",
+      "file_path": "teamcache/constants.py",
       "language": "python"
     },
     {
-      "name": ".constants",
-      "file_path": "teamcache/constants.py",
+      "name": ".config",
+      "file_path": "teamcache/config.py",
       "language": "python"
     },
     {
@@ -64,38 +64,13 @@
       "language": "python"
     },
     {
-      "name": "static_summary",
-      "file_path": "teamcache/files.py",
-      "language": "python"
-    },
-    {
-      "name": "extract_symbols",
-      "file_path": "teamcache/symbols.py",
-      "language": "python"
-    },
-    {
       "name": "teamcache.db",
       "file_path": "teamcache/db.py",
       "language": "python"
     },
     {
-      "name": "cli",
-      "file_path": "teamcache/cli.py",
-      "language": "python"
-    },
-    {
-      "name": "teamcache.files",
+      "name": "static_summary",
       "file_path": "teamcache/files.py",
-      "language": "python"
-    },
-    {
-      "name": "normalize_fts_query",
-      "file_path": "teamcache/search.py",
-      "language": "python"
-    },
-    {
-      "name": "teamcache.secrets",
-      "file_path": "teamcache/secrets.py",
       "language": "python"
     },
     {
@@ -104,8 +79,48 @@
       "language": "python"
     },
     {
+      "name": "teamcache.files",
+      "file_path": "teamcache/files.py",
+      "language": "python"
+    },
+    {
+      "name": "TeamCacheConfig",
+      "file_path": "teamcache/config.py",
+      "language": "python"
+    },
+    {
+      "name": "extract_symbols",
+      "file_path": "teamcache/symbols.py",
+      "language": "python"
+    },
+    {
       "name": "teamcache.cli",
       "file_path": "teamcache/cli.py",
+      "language": "python"
+    },
+    {
+      "name": "cli",
+      "file_path": "teamcache/cli.py",
+      "language": "python"
+    },
+    {
+      "name": "teamcache.config",
+      "file_path": "teamcache/config.py",
+      "language": "python"
+    },
+    {
+      "name": "normalize_fts_query",
+      "file_path": "teamcache/search.py",
+      "language": "python"
+    },
+    {
+      "name": "tests.conftest",
+      "file_path": "tests/conftest.py",
+      "language": "python"
+    },
+    {
+      "name": "teamcache.secrets",
+      "file_path": "teamcache/secrets.py",
       "language": "python"
     },
     {

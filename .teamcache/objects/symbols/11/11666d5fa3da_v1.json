@@ -1,0 +1,36 @@
+{
+  "cache_key": "11666d5fa3da47193ae8b1a12a3422eed95e06fe0104852504efde815e444a08",
+  "file_path": "tests/conftest.py",
+  "file_hash": "46054c12c4ddce3be7265c6fc4ca17941e6a83a3af9ba6ea051ea9a265f4c931",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "tmp_git_repo",
+        "line": null,
+        "signature": "tmp_git_repo"
+      },
+      {
+        "name": "run_teamcache_init",
+        "line": null,
+        "signature": "run_teamcache_init"
+      },
+      {
+        "name": "run_teamcache_index",
+        "line": null,
+        "signature": "run_teamcache_index"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "subprocess",
+      "pytest",
+      "os",
+      "pathlib"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-05-31T10:17:43.953068Z",
+  "created_by": "unknown"
+}

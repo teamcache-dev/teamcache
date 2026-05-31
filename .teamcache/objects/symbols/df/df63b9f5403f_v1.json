@@ -1,0 +1,216 @@
+{
+  "cache_key": "df63b9f5403fbd827163ce7dd7776e386d7e33d1166373ae2551924811f0592e",
+  "file_path": "teamcache/cli.py",
+  "file_hash": "6469eb276a9284bf6e3c2c95859b3599502009b47550d2d7e584e10c050d5127",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "cli",
+        "line": null,
+        "signature": "cli"
+      },
+      {
+        "name": "init",
+        "line": null,
+        "signature": "init"
+      },
+      {
+        "name": "migrate_hooks",
+        "line": null,
+        "signature": "migrate_hooks"
+      },
+      {
+        "name": "index",
+        "line": null,
+        "signature": "index"
+      },
+      {
+        "name": "changed",
+        "line": null,
+        "signature": "changed"
+      },
+      {
+        "name": "sync",
+        "line": null,
+        "signature": "sync"
+      },
+      {
+        "name": "invalidate",
+        "line": null,
+        "signature": "invalidate"
+      },
+      {
+        "name": "stats",
+        "line": null,
+        "signature": "stats"
+      },
+      {
+        "name": "report",
+        "line": null,
+        "signature": "report"
+      },
+      {
+        "name": "commit",
+        "line": null,
+        "signature": "commit"
+      },
+      {
+        "name": "serve",
+        "line": null,
+        "signature": "serve"
+      },
+      {
+        "name": "install",
+        "line": null,
+        "signature": "install"
+      },
+      {
+        "name": "uninstall",
+        "line": null,
+        "signature": "uninstall"
+      },
+      {
+        "name": "_resolve_teamcache_bin",
+        "line": null,
+        "signature": "_resolve_teamcache_bin"
+      },
+      {
+        "name": "_agent_install",
+        "line": null,
+        "signature": "_agent_install"
+      },
+      {
+        "name": "_agent_uninstall",
+        "line": null,
+        "signature": "_agent_uninstall"
+      },
+      {
+        "name": "_write_mcp_json",
+        "line": null,
+        "signature": "_write_mcp_json"
+      },
+      {
+        "name": "_remove_mcp_json",
+        "line": null,
+        "signature": "_remove_mcp_json"
+      },
+      {
+        "name": "_append_instructions_block",
+        "line": null,
+        "signature": "_append_instructions_block"
+      },
+      {
+        "name": "_remove_instructions_block",
+        "line": null,
+        "signature": "_remove_instructions_block"
+      },
+      {
+        "name": "_write_aider_config",
+        "line": null,
+        "signature": "_write_aider_config"
+      },
+      {
+        "name": "_remove_aider_config",
+        "line": null,
+        "signature": "_remove_aider_config"
+      },
+      {
+        "name": "_index_file",
+        "line": null,
+        "signature": "_index_file"
+      },
+      {
+        "name": "_read_summary_object",
+        "line": null,
+        "signature": "_read_summary_object"
+      },
+      {
+        "name": "_read_symbol_object",
+        "line": null,
+        "signature": "_read_symbol_object"
+      },
+      {
+        "name": "_summary_object_for_path",
+        "line": null,
+        "signature": "_summary_object_for_path"
+      },
+      {
+        "name": "_symbol_object_for_path",
+        "line": null,
+        "signature": "_symbol_object_for_path"
+      },
+      {
+        "name": "_write_repomap",
+        "line": null,
+        "signature": "_write_repomap"
+      },
+      {
+        "name": "_module_aliases",
+        "line": null,
+        "signature": "_module_aliases"
+      },
+      {
+        "name": "_import_lookup_keys",
+        "line": null,
+        "signature": "_import_lookup_keys"
+      },
+      {
+        "name": "_detect_hook_conflicts",
+        "line": null,
+        "signature": "_detect_hook_conflicts"
+      },
+      {
+        "name": "_install_post_merge_hook",
+        "line": null,
+        "signature": "_install_post_merge_hook"
+      },
+      {
+        "name": "_first_warning_line",
+        "line": null,
+        "signature": "_first_warning_line"
+      },
+      {
+        "name": "_ensure_gitignore_entry",
+        "line": null,
+        "signature": "_ensure_gitignore_entry"
+      },
+      {
+        "name": "_append_claude_instructions",
+        "line": null,
+        "signature": "_append_claude_instructions"
+      },
+      {
+        "name": "_atomic_write_text",
+        "line": null,
+        "signature": "_atomic_write_text"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "os",
+      "shutil",
+      "subprocess",
+      "sys",
+      "json",
+      "click",
+      "__future__",
+      "collections",
+      "datetime",
+      "pathlib",
+      "rich.console",
+      "rich.markup",
+      "rich.progress",
+      ".config",
+      ".constants",
+      ".db",
+      ".embeddings",
+      ".files",
+      ".symbols"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-05-31T10:17:43.993503Z",
+  "created_by": "unknown"
+}

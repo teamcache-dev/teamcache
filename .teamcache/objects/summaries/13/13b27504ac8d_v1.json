@@ -1,0 +1,12 @@
+{
+  "cache_key": "13b27504ac8d064f8c216ce1db950d1f7b5d1f6766fbb1983e092f9d07701db5",
+  "file_path": "teamcache/files.py",
+  "file_hash": "50c2dcc6d69f598a5a7139c174b5fa1d27222d9e5577883427dfb812da4c032a",
+  "summary": "imports: fnmatch, hashlib, json, os, re, subprocess, __future__, pathlib, typing, .constants | functions: is_sensitive_path, load_teamcacheignore, iter_repo_files, _iter_tracked, is_binary_content, should_skip_metadata, static_summary, cache_key, file_hash, write_summary_object, git_user_email, _append, _unique, _go_imports",
+  "summary_type": "static",
+  "schema_version": "v1",
+  "created_at": "2026-05-31T10:17:43.998463Z",
+  "created_by": "unknown",
+  "file_size_bytes": 8414,
+  "language": "python"
+}

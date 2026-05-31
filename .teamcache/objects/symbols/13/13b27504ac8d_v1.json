@@ -1,0 +1,97 @@
+{
+  "cache_key": "13b27504ac8d064f8c216ce1db950d1f7b5d1f6766fbb1983e092f9d07701db5",
+  "file_path": "teamcache/files.py",
+  "file_hash": "50c2dcc6d69f598a5a7139c174b5fa1d27222d9e5577883427dfb812da4c032a",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "is_sensitive_path",
+        "line": null,
+        "signature": "is_sensitive_path"
+      },
+      {
+        "name": "load_teamcacheignore",
+        "line": null,
+        "signature": "load_teamcacheignore"
+      },
+      {
+        "name": "iter_repo_files",
+        "line": null,
+        "signature": "iter_repo_files"
+      },
+      {
+        "name": "_iter_tracked",
+        "line": null,
+        "signature": "_iter_tracked"
+      },
+      {
+        "name": "is_binary_content",
+        "line": null,
+        "signature": "is_binary_content"
+      },
+      {
+        "name": "should_skip_metadata",
+        "line": null,
+        "signature": "should_skip_metadata"
+      },
+      {
+        "name": "static_summary",
+        "line": null,
+        "signature": "static_summary"
+      },
+      {
+        "name": "cache_key",
+        "line": null,
+        "signature": "cache_key"
+      },
+      {
+        "name": "file_hash",
+        "line": null,
+        "signature": "file_hash"
+      },
+      {
+        "name": "write_summary_object",
+        "line": null,
+        "signature": "write_summary_object"
+      },
+      {
+        "name": "git_user_email",
+        "line": null,
+        "signature": "git_user_email"
+      },
+      {
+        "name": "_append",
+        "line": null,
+        "signature": "_append"
+      },
+      {
+        "name": "_unique",
+        "line": null,
+        "signature": "_unique"
+      },
+      {
+        "name": "_go_imports",
+        "line": null,
+        "signature": "_go_imports"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "fnmatch",
+      "hashlib",
+      "json",
+      "os",
+      "re",
+      "subprocess",
+      "__future__",
+      "pathlib",
+      "typing",
+      ".constants"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-05-31T10:17:43.998463Z",
+  "created_by": "unknown"
+}

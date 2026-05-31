@@ -1,0 +1,12 @@
+{
+  "cache_key": "df63b9f5403fbd827163ce7dd7776e386d7e33d1166373ae2551924811f0592e",
+  "file_path": "teamcache/cli.py",
+  "file_hash": "6469eb276a9284bf6e3c2c95859b3599502009b47550d2d7e584e10c050d5127",
+  "summary": "imports: os, shutil, subprocess, sys, json, click, __future__, collections, datetime, pathlib, rich.console, rich.markup, rich.progress, .config, .constants, .db, .embeddings, .files, .symbols | functions: cli, init, migrate_hooks, index, changed, sync, invalidate, stats, report, commit, serve, install, uninstall, _resolve_teamcache_bin, _agent_install, _agent_uninstall, _write_mcp_json, _remove_mcp_json, _append_instructions_block, _remove_instructions_block, _write_aider_config, _remove_aider_config, _index_file, _read_summary_object, _read_symbol_object, _summary_object_for_path, _symbol_object_for_path, _write_repomap, _module_aliases, _import_lookup_keys, _detect_hook_conflicts, _install_post_merge_hook, _first_warning_line, _ensure_gitignore_entry, _append_claude_instructions, _atomic_write_text",
+  "summary_type": "static",
+  "schema_version": "v1",
+  "created_at": "2026-05-31T10:17:43.993503Z",
+  "created_by": "unknown",
+  "file_size_bytes": 38299,
+  "language": "python"
+}
