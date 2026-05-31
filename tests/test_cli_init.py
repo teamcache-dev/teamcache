@@ -65,8 +65,10 @@ def test_index_on_empty_repo(repo):
 
 
 def test_index_creates_summary_objects(repo):
-    # Write a Python file and index it
+    # Write a Python file, git-add it, then index it (untracked files are not indexed by default)
+    import subprocess
     (repo / "hello.py").write_text("def greet(): pass\n")
+    subprocess.run(["git", "add", "hello.py"], cwd=repo, check=True)
     runner = CliRunner()
     import os
     os.chdir(repo)

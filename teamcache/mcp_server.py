@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import subprocess
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -35,7 +35,7 @@ from .db import (
     rebuild_symbols,
 )
 from .embeddings import connect_embeddings, semantic_search, upsert_embedding
-from .files import cache_key, file_hash, git_user_email, write_summary_object
+from .files import cache_key, file_hash, git_user_email, is_sensitive_path, write_summary_object
 from .secrets import contains_secret
 
 
@@ -79,14 +79,38 @@ def run_server() -> None:
                     obj = get_summary(conn, key)
                 except OSError:
                     pass
+
+            # P1-E: detect moved files — cached path differs from current path
+            if obj and obj.get("file_path") != rel:
+                return {
+                    "summary": obj["summary"],
+                    "summary_type": obj.get("summary_type", "ai"),
+                    "cached": True,
+                    "file_path": file_path,
+                    "language": language,
+                    "path_mismatch": True,
+                    "note": (
+                        f"Summary found but was indexed under a different path ({obj['file_path']}). "
+                        "File may have been moved. Read the file and call cache_summary() to re-index."
+                    ),
+                    "summary_confidence": "low",
+                }
+
             if obj and obj["summary_type"] == "ai":
+                # P1-B: enforce "read source before edit" note and add summary_confidence
+                note = (
+                    "IMPORTANT: You MUST read the exact source file before making any edits. "
+                    "This summary is for orientation only. Do not edit based solely on this cache."
+                ) if getattr(config, "require_source_before_edit", True) else "Read source before editing."
+                confidence = _summary_confidence(obj.get("created_at"))
                 return {
                     "summary": obj["summary"],
                     "summary_type": "ai",
                     "cached": True,
                     "file_path": file_path,
                     "language": language,
-                    "note": "Read exact source before editing.",
+                    "note": note,
+                    "summary_confidence": confidence,
                 }
             if obj and obj["summary_type"] == "static":
                 return {
@@ -114,6 +138,17 @@ def run_server() -> None:
             rel, path = _sanitize_path(repo_root, repo_resolved, file_path)
             if rel is None or path is None:
                 return {"stored": False, "error": "path outside repository"}
+
+            # P0-C: block sensitive paths (built-in patterns + config denylist)
+            if is_sensitive_path(str(rel)):
+                return {"stored": False, "error": "sensitive path blocked — not cached"}
+            denylist = getattr(config, "sensitive_path_denylist", []) or []
+            if denylist:
+                rel_lower = rel.lower()
+                for pattern in denylist:
+                    if pattern and pattern.lower() in rel_lower:
+                        return {"stored": False, "error": "sensitive path blocked — not cached"}
+
             if not path.exists():
                 return {"stored": False, "error": "file not found"}
             if not summary or not summary.strip():
@@ -139,7 +174,7 @@ def run_server() -> None:
                 "summary": summary.strip(),
                 "summary_type": "ai",
                 "schema_version": config.schema_version,
-                "created_at": datetime.utcnow().isoformat() + "Z",
+                "created_at": datetime.now(tz=timezone.utc).isoformat().replace("+00:00", "Z"),
                 "created_by": git_user_email(repo_root),
                 "file_size_bytes": len(content),
                 "language": language,
@@ -271,6 +306,25 @@ def run_server() -> None:
         emb_conn.close()
 
 
+def _summary_confidence(created_at: str | None) -> str:
+    """Compute confidence tier based on how old the cached summary is."""
+    if not created_at:
+        return "unknown"
+    try:
+        # Handle both Z-suffix and +00:00 offset ISO strings
+        ts = created_at.replace("Z", "+00:00")
+        created = datetime.fromisoformat(ts)
+        now = datetime.now(tz=timezone.utc)
+        age_days = (now - created).days
+        if age_days < 7:
+            return "high"
+        if age_days < 30:
+            return "medium"
+        return "low"
+    except (ValueError, TypeError):
+        return "unknown"
+
+
 def _repo_overview(repo_root: Path, conn: Any) -> str:
     tree, language_counts = _repo_scan(repo_root)
     total_on_disk = sum(language_counts.values())
@@ -297,8 +351,8 @@ def _repo_overview(repo_root: Path, conn: Any) -> str:
 
 
 def _repo_scan(repo_root: Path) -> tuple[str, dict[str, int]]:
+    # Directory tree: use os.walk (unchanged)
     lines = [repo_root.name + "/"]
-    language_counts: dict[str, int] = {}
     root_depth = len(repo_root.parts)
     for dirpath, dirs, files in os.walk(repo_root):
         current = Path(dirpath)
@@ -313,11 +367,50 @@ def _repo_scan(repo_root: Path) -> tuple[str, dict[str, int]]:
             suffix = Path(filename).suffix.lower()
             if suffix in SKIP_SUFFIXES or suffix in BINARY_EXTENSIONS:
                 continue
-            lang = LANGUAGE_BY_SUFFIX.get(suffix, suffix or "<none>")
-            language_counts[lang] = language_counts.get(lang, 0) + 1
             if depth <= 2:
                 lines.append(f"{indent}{filename}")
+
+    # P2-B: language counts from git ls-files (tracked files only)
+    language_counts: dict[str, int] = {}
+    try:
+        ls_result = subprocess.run(
+            ["git", "ls-files", "-z", "--cached"],
+            cwd=repo_root,
+            capture_output=True,
+            check=False,
+            timeout=30,
+        )
+        if ls_result.returncode == 0:
+            for raw in ls_result.stdout.split(b"\x00"):
+                if not raw:
+                    continue
+                rel = raw.decode("utf-8", errors="replace")
+                suffix = Path(rel).suffix.lower()
+                if suffix in SKIP_SUFFIXES or suffix in BINARY_EXTENSIONS:
+                    continue
+                lang = LANGUAGE_BY_SUFFIX.get(suffix, suffix or "<none>")
+                language_counts[lang] = language_counts.get(lang, 0) + 1
+        else:
+            # Fallback to os.walk-based counting if git is unavailable
+            language_counts = _language_counts_from_walk(repo_root)
+    except (OSError, subprocess.TimeoutExpired):
+        language_counts = _language_counts_from_walk(repo_root)
+
     return "\n".join(lines), language_counts
+
+
+def _language_counts_from_walk(repo_root: Path) -> dict[str, int]:
+    """Fallback: count languages via os.walk when git ls-files is unavailable."""
+    language_counts: dict[str, int] = {}
+    for dirpath, dirs, files in os.walk(repo_root):
+        dirs[:] = [dirname for dirname in dirs if dirname not in SKIP_DIRS]
+        for filename in files:
+            suffix = Path(filename).suffix.lower()
+            if suffix in SKIP_SUFFIXES or suffix in BINARY_EXTENSIONS:
+                continue
+            lang = LANGUAGE_BY_SUFFIX.get(suffix, suffix or "<none>")
+            language_counts[lang] = language_counts.get(lang, 0) + 1
+    return language_counts
 
 
 def _semantic_results(

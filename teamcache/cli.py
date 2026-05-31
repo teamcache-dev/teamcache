@@ -63,7 +63,9 @@ def cli() -> None:
 
 
 @cli.command()
-def init() -> None:
+@click.option("--enable-hooks", is_flag=True, default=False, help="Install .githooks/post-merge hook.")
+@click.option("--force-hooks", is_flag=True, default=False, help="Overwrite existing hooks even if conflicts exist.")
+def init(enable_hooks: bool, force_hooks: bool) -> None:
     repo_root = Path.cwd()
     try:
         result = subprocess.run(
@@ -84,13 +86,47 @@ def init() -> None:
     (repo_root / LOCAL_DIR).mkdir(parents=True, exist_ok=True)
     write_config(repo_root, TeamCacheConfig())
     _ensure_gitignore_entry(repo_root / ".gitignore", ".teamcache/local/")
-    if _install_post_merge_hook(repo_root):
-        console.print("Git hook installed: .githooks/post-merge")
-    if _install_post_commit_hook(repo_root):
-        console.print("Git hook installed: .githooks/post-commit")
+
+    # Warn about stale post-commit hook left by v0.1.x
+    if (repo_root / ".githooks" / "post-commit").exists():
+        console.print(
+            "[yellow]warning:[/yellow] .githooks/post-commit exists from a previous install. "
+            "Run: teamcache migrate-hooks"
+        )
+
+    if enable_hooks:
+        conflicts = _detect_hook_conflicts(repo_root)
+        if conflicts and not force_hooks:
+            console.print(
+                f"[red]error:[/red] existing hooks detected in .git/hooks/: {', '.join(conflicts)}. "
+                "Use --force-hooks to overwrite."
+            )
+            raise SystemExit(1)
+        if _install_post_merge_hook(repo_root, set_hooks_path=True):
+            console.print("Git hook installed: .githooks/post-merge")
+    else:
+        console.print("Hooks not installed. Run: teamcache init --enable-hooks")
 
     console.print("Run: teamcache index")
     console.print("Then: teamcache install")
+
+
+@cli.command("migrate-hooks")
+def migrate_hooks() -> None:
+    """Remove dangerous amend lines from .githooks/post-commit left by v0.1.x."""
+    root = find_repo_root(Path.cwd())
+    hook = root / ".githooks" / "post-commit"
+    if not hook.exists():
+        console.print("No .githooks/post-commit found. Nothing to do.")
+        return
+    content = hook.read_text(encoding="utf-8")
+    lines = content.splitlines(keepends=True)
+    cleaned = [l for l in lines if "amend" not in l]
+    if len(cleaned) == len(lines):
+        console.print("No amend lines found. Hook is already clean.")
+        return
+    _atomic_write_text(hook, "".join(cleaned))
+    console.print(f"Removed {len(lines) - len(cleaned)} amend line(s) from .githooks/post-commit.")
 
 
 @cli.command()
@@ -199,10 +235,25 @@ def sync(quiet: bool) -> None:
 @click.option("--stale", is_flag=True, help="Invalidate entries older than 30 days.")
 @click.option("--all", "all_entries", is_flag=True, help="Clear the full local index.")
 @click.option("--quiet", is_flag=True, help="Suppress output.")
-def invalidate(files: tuple[str, ...], stale: bool, all_entries: bool, quiet: bool) -> None:
+@click.option("--stdin", is_flag=True, default=False, help="Read file paths from stdin, one per line.")
+def invalidate(files: tuple[str, ...], stale: bool, all_entries: bool, quiet: bool, stdin: bool) -> None:
     if stale and all_entries:
         raise click.ClickException("--stale and --all are mutually exclusive")
-    if not stale and not all_entries and not files:
+
+    # Collect paths from stdin if requested
+    stdin_files: list[str] = []
+    if stdin:
+        for line in sys.stdin:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if stripped.startswith("--"):
+                continue
+            stdin_files.append(stripped)
+
+    all_files = list(files) + stdin_files
+
+    if not stale and not all_entries and not all_files:
         if not quiet:
             raise click.ClickException("provide file path(s), --stale, or --all")
         return
@@ -219,11 +270,11 @@ def invalidate(files: tuple[str, ...], stale: bool, all_entries: bool, quiet: bo
             if not quiet:
                 console.print(f"Invalidated: {count} stale entries")
         else:
-            for file_path in files:
+            for file_path in all_files:
                 rel = file_path.replace("\\", "/").lstrip("/")
                 invalidate_by_path(conn, rel)
             if not quiet:
-                console.print(f"Invalidated: {len(files)} file(s)")
+                console.print(f"Invalidated: {len(all_files)} file(s)")
     finally:
         conn.close()
 
@@ -342,6 +393,19 @@ def commit() -> None:
         root = find_repo_root(Path.cwd())
     except RuntimeError as exc:
         raise click.ClickException(str(exc)) from exc
+
+    # P2-C: Abort if the user already has staged changes
+    pre_staged = subprocess.run(
+        ["git", "diff", "--staged", "--quiet"],
+        cwd=root,
+        check=False,
+    )
+    if pre_staged.returncode != 0:
+        console.print(
+            "[red]error:[/red] You have staged changes. "
+            "Commit your changes first, then run teamcache commit."
+        )
+        raise SystemExit(1)
 
     objects_dir = str(root / ".teamcache" / "objects")
     try:
@@ -893,10 +957,29 @@ def _import_lookup_keys(import_name: str) -> list[str]:
 
 
 _HOOK_SYNC = "teamcache sync --quiet"
-_HOOK_INVALIDATE = "teamcache invalidate $(git diff --name-only ORIG_HEAD HEAD) --quiet"
+_HOOK_INVALIDATE = "git diff -z --name-only ORIG_HEAD HEAD | xargs -0 -r teamcache invalidate --quiet"
 
 
-def _install_post_merge_hook(repo_root: Path) -> bool:
+def _detect_hook_conflicts(repo_root: Path) -> list[str]:
+    """Return names of executable hook files in .git/hooks/ (excluding *.sample)."""
+    git_hooks_dir = repo_root / ".git" / "hooks"
+    if not git_hooks_dir.is_dir():
+        return []
+    conflicts = []
+    for hook_file in git_hooks_dir.iterdir():
+        if hook_file.suffix == ".sample":
+            continue
+        if not hook_file.is_file():
+            continue
+        # On Windows all files are treated as executable; check execute bit on POSIX
+        if os.name != "nt":
+            if not os.access(hook_file, os.X_OK):
+                continue
+        conflicts.append(hook_file.name)
+    return sorted(conflicts)
+
+
+def _install_post_merge_hook(repo_root: Path, set_hooks_path: bool = False) -> bool:
     hooks_dir = repo_root / ".githooks"
     hooks_dir.mkdir(parents=True, exist_ok=True)
     hook_path = hooks_dir / "post-merge"
@@ -923,52 +1006,20 @@ def _install_post_merge_hook(repo_root: Path) -> bool:
             hook_path.chmod(0o755)
         except OSError:
             pass
-    try:
-        result = subprocess.run(
-            ["git", "config", "core.hooksPath", ".githooks"],
-            cwd=repo_root,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if result.returncode != 0:
-            detail = _first_warning_line(result.stderr.strip() or result.stdout.strip())
-            console.print(f"[yellow]warning:[/yellow] git hook config failed: {escape(detail)}")
-    except OSError as exc:
-        console.print(f"[yellow]warning:[/yellow] git hook config failed: {escape(str(exc))}")
-    return True
-
-
-_POST_COMMIT_HOOK_SENTINEL = "teamcache/objects"
-_POST_COMMIT_HOOK_BODY = (
-    'CACHE_CHANGES=$(git status --porcelain .teamcache/objects/)\n'
-    'if [ -n "$CACHE_CHANGES" ]; then\n'
-    '  git add .teamcache/objects/\n'
-    '  git commit --amend --no-edit --quiet\n'
-    'fi\n'
-)
-
-
-def _install_post_commit_hook(repo_root: Path) -> bool:
-    hooks_dir = repo_root / ".githooks"
-    hooks_dir.mkdir(parents=True, exist_ok=True)
-    hook_path = hooks_dir / "post-commit"
-    if hook_path.exists():
-        content = hook_path.read_text(encoding="utf-8", errors="replace")
-        if _POST_COMMIT_HOOK_SENTINEL in content:
-            return False
-        newline = "\r\n" if "\r\n" in content else "\n"
-        prefix = content
-        if prefix and not prefix.endswith(("\n", "\r")):
-            prefix += newline
-        _atomic_write_text(hook_path, prefix + _POST_COMMIT_HOOK_BODY.replace("\n", newline))
-    else:
-        _atomic_write_text(hook_path, f"#!/bin/sh\n{_POST_COMMIT_HOOK_BODY}")
-    if os.name != "nt":
+    if set_hooks_path:
         try:
-            hook_path.chmod(0o755)
-        except OSError:
-            pass
+            result = subprocess.run(
+                ["git", "config", "core.hooksPath", ".githooks"],
+                cwd=repo_root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode != 0:
+                detail = _first_warning_line(result.stderr.strip() or result.stdout.strip())
+                console.print(f"[yellow]warning:[/yellow] git hook config failed: {escape(detail)}")
+        except OSError as exc:
+            console.print(f"[yellow]warning:[/yellow] git hook config failed: {escape(str(exc))}")
     return True
 
 

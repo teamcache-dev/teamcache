@@ -29,8 +29,39 @@ def connect_embeddings(db_path: Path) -> sqlite3.Connection:
     return conn
 
 
-def get_model() -> Any | None:
+def _model_enabled(config: Any = None) -> bool:
+    """Return True only if embeddings are explicitly enabled in config.
+
+    Defaults to False so that the first-run experience never triggers an
+    unexpected ~80 MB download.
+    """
+    if config is None:
+        return False
+    return bool(getattr(config, "enable_embeddings", False))
+
+
+def embeddings_count(conn: sqlite3.Connection) -> int:
+    """Return the number of stored embeddings, or 0 on any error."""
+    try:
+        return conn.execute("SELECT COUNT(*) FROM embeddings").fetchone()[0]
+    except Exception:  # noqa: BLE001
+        return 0
+
+
+def should_use_embeddings(emb_conn: sqlite3.Connection, config: Any) -> bool:
+    """Return True when embeddings are enabled and below the row-count guard."""
+    if not getattr(config, "enable_embeddings", False):
+        return False
+    count = embeddings_count(emb_conn)
+    limit = getattr(config, "max_files_for_local_embeddings", 5000)
+    return count <= limit
+
+
+def get_model(config: Any = None) -> Any | None:
     global _MODEL, _MODEL_LOAD_FAILED
+    # P1-D: return None immediately when embeddings are disabled (default).
+    if not _model_enabled(config):
+        return None
     if _MODEL is not None:
         return _MODEL
     if _MODEL_LOAD_FAILED:
@@ -66,8 +97,9 @@ def upsert_embedding(
     file_path: str,
     summary: str,
     summary_type: str,
+    config: Any = None,
 ) -> None:
-    model = get_model()
+    model = get_model(config)
     if model is None:
         return
     try:
@@ -97,8 +129,13 @@ def upsert_embedding(
         return
 
 
-def semantic_search(conn: sqlite3.Connection, query: str, limit: int = 5) -> list[dict[str, Any]]:
-    model = get_model()
+def semantic_search(
+    conn: sqlite3.Connection,
+    query: str,
+    limit: int = 5,
+    config: Any = None,
+) -> list[dict[str, Any]]:
+    model = get_model(config)
     if model is None:
         return []
     try:

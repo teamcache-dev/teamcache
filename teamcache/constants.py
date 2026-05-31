@@ -6,9 +6,12 @@ LOCAL_DIR = ".teamcache/local"
 INDEX_DB = ".teamcache/local/index.sqlite"
 EMBEDDINGS_DB = ".teamcache/local/embeddings.sqlite"
 CONFIG_FILE = ".teamcache/config.yaml"
-SCHEMA_VERSION = "v1"
+SCHEMA_VERSION = "v2"
 MAX_FILE_BYTES = 500 * 1024
 
+# Deprecated: iter_repo_files now uses git ls-files instead of os.walk.
+# SKIP_DIRS is kept for backwards compatibility only and is no longer consulted
+# by the default file iteration path.
 SKIP_DIRS = {
     ".git",
     ".teamcache",

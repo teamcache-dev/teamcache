@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import fnmatch
 import hashlib
 import json
 import os
@@ -16,11 +17,91 @@ from .constants import (
 )
 
 
-def iter_repo_files(root: Path) -> Iterator[Path]:
-    for dirpath, dirs, files in os.walk(root):
-        dirs[:] = [dirname for dirname in dirs if dirname not in SKIP_DIRS]
-        for filename in files:
-            yield Path(dirpath) / filename
+# ---------------------------------------------------------------------------
+# Sensitive path denylist — hardcoded, cannot be overridden by configuration.
+# ---------------------------------------------------------------------------
+
+_SENSITIVE_PATH_PATTERNS = [
+    re.compile(r"(^|[/\\])\.env(\.[^/\\]+)?$", re.IGNORECASE),
+    re.compile(r"(^|[/\\])secrets?[/\\]", re.IGNORECASE),
+    re.compile(r"(^|[/\\])credentials?[/\\]", re.IGNORECASE),
+    re.compile(r"(^|[/\\])\.aws[/\\]", re.IGNORECASE),
+    re.compile(r"(^|[/\\])\.ssh[/\\]", re.IGNORECASE),
+    re.compile(r"(^|[/\\])\.gnupg[/\\]", re.IGNORECASE),
+    re.compile(r"\.(pem|key|p12|pfx|jks|keystore|ppk)$", re.IGNORECASE),
+    re.compile(r"(^|[/\\])id_(rsa|ecdsa|ed25519|dsa)$"),
+    re.compile(r"(^|[/\\])\.netrc$", re.IGNORECASE),
+    re.compile(r"(^|[/\\])\.npmrc$", re.IGNORECASE),
+    re.compile(r"(^|[/\\])\.pypirc$", re.IGNORECASE),
+]
+
+
+def is_sensitive_path(rel_path: str) -> bool:
+    normalised = rel_path.replace("\\", "/")
+    return any(p.search(normalised) for p in _SENSITIVE_PATH_PATTERNS)
+
+
+# ---------------------------------------------------------------------------
+# .teamcacheignore support
+# ---------------------------------------------------------------------------
+
+def load_teamcacheignore(root: Path) -> list:
+    path = root / ".teamcacheignore"
+    if not path.exists():
+        return []
+    patterns = []
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        try:
+            patterns.append(re.compile(fnmatch.translate(line)))
+        except re.error:
+            pass
+    return patterns
+
+
+# ---------------------------------------------------------------------------
+# File iteration — always uses git ls-files for safety
+# ---------------------------------------------------------------------------
+
+def iter_repo_files(root: Path, tracked_only: bool = True, extra_ignores: list | None = None) -> Iterator[Path]:
+    extra_ignores = extra_ignores or []
+    if tracked_only:
+        yield from _iter_tracked(root, extra_ignores)
+    else:
+        yield from _iter_tracked(root, extra_ignores)  # fallback: still use git ls-files for safety
+
+
+def _iter_tracked(root: Path, extra_ignores: list) -> Iterator[Path]:
+    try:
+        result = subprocess.run(
+            ["git", "ls-files", "-z", "--cached", "--full-name"],
+            cwd=root,
+            capture_output=True,
+            check=False,
+            timeout=30,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return
+    if result.returncode != 0:
+        return
+    root_resolved = root.resolve()
+    for raw in result.stdout.split(b"\x00"):
+        if not raw:
+            continue
+        rel = raw.decode("utf-8", errors="replace")
+        if is_sensitive_path(rel):
+            continue
+        if any(p.search(rel) for p in extra_ignores):
+            continue
+        path = (root / rel).resolve()
+        try:
+            path.relative_to(root_resolved)
+        except ValueError:
+            continue
+        if path.is_file():
+            yield path
 
 
 def is_binary_content(path: Path, content: bytes) -> bool:

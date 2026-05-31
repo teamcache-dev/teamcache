@@ -85,7 +85,18 @@ def connect(db_path: Path) -> sqlite3.Connection:
         "CREATE INDEX IF NOT EXISTS idx_symbols_file_path ON symbols(file_path)"
     )
     conn.commit()
+    _migrate_add_last_accessed(conn)
     return conn
+
+
+def _migrate_add_last_accessed(conn: sqlite3.Connection) -> None:
+    cols = {row["name"] for row in conn.execute("PRAGMA table_info(summaries)")}
+    if "last_accessed_at" not in cols:
+        conn.execute("ALTER TABLE summaries ADD COLUMN last_accessed_at TEXT")
+        conn.commit()
+    if "git_commit" not in cols:
+        conn.execute("ALTER TABLE summaries ADD COLUMN git_commit TEXT")
+        conn.commit()
 
 
 def insert_summary(conn: sqlite3.Connection, obj: dict[str, Any], commit: bool = True) -> None:
@@ -105,8 +116,9 @@ def insert_summary(conn: sqlite3.Connection, obj: dict[str, Any], commit: bool =
             created_at,
             created_by,
             file_size_bytes,
-            schema_version
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            schema_version,
+            last_accessed_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
         ON CONFLICT(cache_key) DO UPDATE SET
             file_path = excluded.file_path,
             file_hash = excluded.file_hash,
@@ -158,7 +170,14 @@ def get_summary(conn: sqlite3.Connection, cache_key: str) -> dict[str, Any] | No
         "SELECT * FROM summaries WHERE cache_key = ?",
         (cache_key,),
     ).fetchone()
-    return dict(row) if row else None
+    if row:
+        conn.execute(
+            "UPDATE summaries SET last_accessed_at = ? WHERE cache_key = ?",
+            (datetime.utcnow().isoformat() + "Z", row["cache_key"]),
+        )
+        conn.commit()
+        return dict(row)
+    return None
 
 
 def get_summary_by_path(conn: sqlite3.Connection, file_path: str) -> dict[str, Any] | None:
@@ -171,7 +190,14 @@ def get_summary_by_path(conn: sqlite3.Connection, file_path: str) -> dict[str, A
         """,
         (file_path,),
     ).fetchone()
-    return dict(row) if row else None
+    if row:
+        conn.execute(
+            "UPDATE summaries SET last_accessed_at = ? WHERE cache_key = ?",
+            (datetime.utcnow().isoformat() + "Z", row["cache_key"]),
+        )
+        conn.commit()
+        return dict(row)
+    return None
 
 
 def keyword_search(
@@ -383,8 +409,11 @@ def invalidate_by_path(conn: sqlite3.Connection, file_path: str) -> None:
 def invalidate_stale(conn: sqlite3.Connection, days: int = 30) -> int:
     cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
     summary_rows = conn.execute(
-        "SELECT rowid, cache_key FROM summaries WHERE created_at < ?",
-        (cutoff,),
+        """
+        SELECT rowid, cache_key FROM summaries
+        WHERE (last_accessed_at IS NULL AND created_at < ?) OR last_accessed_at < ?
+        """,
+        (cutoff, cutoff),
     ).fetchall()
     with conn:
         for row in summary_rows:
