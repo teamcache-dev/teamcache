@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -40,13 +41,7 @@ jobs:
           pip install ".[symbols]"
 
       - name: Build binary (no embeddings — keeps binary ~15MB)
-        run: |
-          pyinstaller \
-            --onefile \
-            --name ${{ matrix.artifact }} \
-            --hidden-import teamcache \
-            --collect-submodules teamcache \
-            teamcache/__main__.py
+        run: pyinstaller --onefile --name ${{ matrix.artifact }} --hidden-import teamcache --collect-submodules teamcache teamcache/__main__.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
