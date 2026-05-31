@@ -42,6 +42,7 @@ teamcache install --agent codex          # OpenAI Codex CLI
 teamcache install --agent windsurf       # Windsurf
 teamcache install --agent aider          # Aider
 teamcache install --agent opencode       # OpenCode
+teamcache install --dry-run --print-diff # Preview file changes
 
 # 6. Commit the static index to share with your team
 git add .teamcache/objects/
@@ -59,7 +60,7 @@ That's it. Your AI tool now calls `get_file_context()` before reading any file a
 |---|---|
 | `teamcache init` | Initialize in the current git repo |
 | `teamcache index` | Parse all files, build static summaries |
-| `teamcache install [--agent NAME]` | Register MCP server with your AI tool |
+| `teamcache install [--agent NAME] [--dry-run] [--print-diff]` | Register MCP server with your AI tool |
 | `teamcache serve` | Start the MCP stdio server (called by AI tool) |
 | `teamcache changed [--since BRANCH]` | Re-index files changed since a branch |
 | `teamcache sync` | Rebuild local index from committed objects |
@@ -67,7 +68,7 @@ That's it. Your AI tool now calls `get_file_context()` before reading any file a
 | `teamcache stats` | Show AI vs static coverage, top contributors |
 | `teamcache report` | Write `.teamcache/reports/YYYY-MM.md` |
 | `teamcache commit` | `git add .teamcache/objects/ && git commit` |
-| `teamcache uninstall [--agent NAME]` | Remove MCP registration and instructions |
+| `teamcache uninstall [--agent NAME] [--dry-run] [--print-diff]` | Remove MCP registration and instructions |
 
 ## MCP tools
 

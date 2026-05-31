@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import sys
 import json
+import difflib
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
@@ -452,14 +453,16 @@ _SUPPORTED_AGENTS = ("claude", "codex", "cursor", "opencode", "aider", "windsurf
     type=click.Choice(_SUPPORTED_AGENTS),
     help="AI tool to register with.",
 )
-def install(agent: str) -> None:
+@click.option("--dry-run", is_flag=True, help="Show what would change without writing files.")
+@click.option("--print-diff", is_flag=True, help="Print a unified diff of file changes.")
+def install(agent: str, dry_run: bool, print_diff: bool) -> None:
     try:
         repo_root = find_repo_root(Path.cwd())
     except RuntimeError as exc:
         raise click.ClickException(str(exc)) from exc
 
     teamcache_bin = _resolve_teamcache_bin()
-    _agent_install(agent, repo_root, teamcache_bin)
+    _agent_install(agent, repo_root, teamcache_bin, dry_run=dry_run, print_diff=print_diff)
 
 
 @cli.command()
@@ -470,13 +473,15 @@ def install(agent: str) -> None:
     type=click.Choice(_SUPPORTED_AGENTS),
     help="AI tool to unregister from.",
 )
-def uninstall(agent: str) -> None:
+@click.option("--dry-run", is_flag=True, help="Show what would change without writing files.")
+@click.option("--print-diff", is_flag=True, help="Print a unified diff of file changes.")
+def uninstall(agent: str, dry_run: bool, print_diff: bool) -> None:
     try:
         repo_root = find_repo_root(Path.cwd())
     except RuntimeError as exc:
         raise click.ClickException(str(exc)) from exc
 
-    _agent_uninstall(agent, repo_root)
+    _agent_uninstall(agent, repo_root, dry_run=dry_run, print_diff=print_diff)
 
 
 def _resolve_teamcache_bin() -> Path:
@@ -499,118 +504,151 @@ def _resolve_teamcache_bin() -> Path:
     return Path(found)
 
 
-def _agent_install(agent: str, repo_root: Path, teamcache_bin: Path) -> None:
+def _agent_install(
+    agent: str,
+    repo_root: Path,
+    teamcache_bin: Path,
+    *,
+    dry_run: bool = False,
+    print_diff: bool = False,
+) -> None:
     if agent == "claude":
-        if not shutil.which("claude"):
+        if not dry_run and not shutil.which("claude"):
             raise click.ClickException("'claude' not found in PATH")
-        try:
-            subprocess.run(
-                ["claude", "mcp", "add", "teamcache", "--scope", "project",
-                 "--", str(teamcache_bin), "serve"],
-                cwd=repo_root,
-                check=True,
-            )
-        except subprocess.CalledProcessError as exc:
-            raise click.ClickException(f"claude mcp add failed: exit {exc.returncode}") from exc
-        except OSError as exc:
-            raise click.ClickException(f"failed to run claude: {exc}") from exc
-        _append_claude_instructions(repo_root / "CLAUDE.md")
+        if not dry_run:
+            try:
+                subprocess.run(
+                    ["claude", "mcp", "add", "teamcache", "--scope", "project",
+                     "--", str(teamcache_bin), "serve"],
+                    cwd=repo_root,
+                    check=True,
+                )
+            except subprocess.CalledProcessError as exc:
+                raise click.ClickException(f"claude mcp add failed: exit {exc.returncode}") from exc
+            except OSError as exc:
+                raise click.ClickException(f"failed to run claude: {exc}") from exc
+        _append_claude_instructions(repo_root / "CLAUDE.md", dry_run=dry_run, print_diff=print_diff)
         console.print("Claude Code: MCP registered, CLAUDE.md updated.")
 
     elif agent == "codex":
         mcp_config = repo_root / ".codex" / "config.json"
-        _write_mcp_json(mcp_config, str(teamcache_bin))
+        _write_mcp_json(mcp_config, str(teamcache_bin), dry_run=dry_run, print_diff=print_diff)
         _append_instructions_block(
             repo_root / "AGENTS.md",
             _AGENTS_INSTRUCTIONS_BLOCK,
-            _AGENTS_SENTINEL,
+            dry_run=dry_run,
+            print_diff=print_diff,
         )
         console.print("Codex: .codex/config.json written, AGENTS.md updated.")
 
     elif agent == "cursor":
         mcp_config = repo_root / ".cursor" / "mcp.json"
-        _write_mcp_json(mcp_config, str(teamcache_bin))
+        _write_mcp_json(mcp_config, str(teamcache_bin), dry_run=dry_run, print_diff=print_diff)
         _append_instructions_block(
             repo_root / ".cursorrules",
             _CURSORRULES_BLOCK,
-            _AGENTS_SENTINEL,
+            dry_run=dry_run,
+            print_diff=print_diff,
         )
         console.print("Cursor: .cursor/mcp.json written, .cursorrules updated.")
 
     elif agent == "opencode":
         mcp_config = repo_root / ".opencode" / "config.json"
-        _write_mcp_json(mcp_config, str(teamcache_bin))
+        _write_mcp_json(mcp_config, str(teamcache_bin), dry_run=dry_run, print_diff=print_diff)
         _append_instructions_block(
             repo_root / "AGENTS.md",
             _AGENTS_INSTRUCTIONS_BLOCK,
-            _AGENTS_SENTINEL,
+            dry_run=dry_run,
+            print_diff=print_diff,
         )
         console.print("OpenCode: .opencode/config.json written, AGENTS.md updated.")
 
     elif agent == "aider":
         # Aider has no MCP; inject instructions via --read config
         instructions_path = repo_root / ".teamcache-instructions.md"
-        _atomic_write_text(instructions_path, _AIDER_INSTRUCTIONS_FILE)
-        _write_aider_config(repo_root / ".aider.conf.yml", ".teamcache-instructions.md")
+        _write_text_change(
+            instructions_path,
+            _AIDER_INSTRUCTIONS_FILE,
+            dry_run=dry_run,
+            print_diff=print_diff,
+        )
+        _write_aider_config(
+            repo_root / ".aider.conf.yml",
+            ".teamcache-instructions.md",
+            dry_run=dry_run,
+            print_diff=print_diff,
+        )
         console.print("Aider: .teamcache-instructions.md written, .aider.conf.yml updated.")
 
     elif agent == "windsurf":
         mcp_config = repo_root / ".windsurf" / "mcp.json"
-        _write_mcp_json(mcp_config, str(teamcache_bin))
+        _write_mcp_json(mcp_config, str(teamcache_bin), dry_run=dry_run, print_diff=print_diff)
         _append_instructions_block(
             repo_root / ".windsurfrules",
             _CURSORRULES_BLOCK,
-            _AGENTS_SENTINEL,
+            dry_run=dry_run,
+            print_diff=print_diff,
         )
         console.print("Windsurf: .windsurf/mcp.json written, .windsurfrules updated.")
 
 
-def _agent_uninstall(agent: str, repo_root: Path) -> None:
+def _agent_uninstall(
+    agent: str,
+    repo_root: Path,
+    *,
+    dry_run: bool = False,
+    print_diff: bool = False,
+) -> None:
     if agent == "claude":
-        if shutil.which("claude"):
+        if not dry_run and shutil.which("claude"):
             try:
                 subprocess.run(
                     ["claude", "mcp", "remove", "teamcache", "--scope", "project"],
                     cwd=repo_root,
                     check=False,
-                )
+            )
             except OSError:
                 pass
-        _remove_instructions_block(repo_root / "CLAUDE.md", _CLAUDE_SENTINEL)
+        _remove_instructions_block(repo_root / "CLAUDE.md", dry_run=dry_run, print_diff=print_diff)
         console.print("Claude Code: MCP removed, CLAUDE.md cleaned.")
 
     elif agent == "codex":
-        _remove_mcp_json(repo_root / ".codex" / "config.json")
-        _remove_instructions_block(repo_root / "AGENTS.md", _AGENTS_SENTINEL)
+        _remove_mcp_json(repo_root / ".codex" / "config.json", dry_run=dry_run, print_diff=print_diff)
+        _remove_instructions_block(repo_root / "AGENTS.md", dry_run=dry_run, print_diff=print_diff)
         console.print("Codex: config removed.")
 
     elif agent == "cursor":
-        _remove_mcp_json(repo_root / ".cursor" / "mcp.json")
-        _remove_instructions_block(repo_root / ".cursorrules", _AGENTS_SENTINEL)
+        _remove_mcp_json(repo_root / ".cursor" / "mcp.json", dry_run=dry_run, print_diff=print_diff)
+        _remove_instructions_block(repo_root / ".cursorrules", dry_run=dry_run, print_diff=print_diff)
         console.print("Cursor: config removed.")
 
     elif agent == "opencode":
-        _remove_mcp_json(repo_root / ".opencode" / "config.json")
-        _remove_instructions_block(repo_root / "AGENTS.md", _AGENTS_SENTINEL)
+        _remove_mcp_json(repo_root / ".opencode" / "config.json", dry_run=dry_run, print_diff=print_diff)
+        _remove_instructions_block(repo_root / "AGENTS.md", dry_run=dry_run, print_diff=print_diff)
         console.print("OpenCode: config removed.")
 
     elif agent == "aider":
-        _remove_aider_config(repo_root / ".aider.conf.yml", ".teamcache-instructions.md")
+        _remove_aider_config(
+            repo_root / ".aider.conf.yml",
+            ".teamcache-instructions.md",
+            dry_run=dry_run,
+            print_diff=print_diff,
+        )
         instructions = repo_root / ".teamcache-instructions.md"
-        if instructions.exists():
-            instructions.unlink()
+        _delete_file_change(instructions, dry_run=dry_run, print_diff=print_diff)
         console.print("Aider: config removed.")
 
     elif agent == "windsurf":
-        _remove_mcp_json(repo_root / ".windsurf" / "mcp.json")
-        _remove_instructions_block(repo_root / ".windsurfrules", _AGENTS_SENTINEL)
+        _remove_mcp_json(repo_root / ".windsurf" / "mcp.json", dry_run=dry_run, print_diff=print_diff)
+        _remove_instructions_block(repo_root / ".windsurfrules", dry_run=dry_run, print_diff=print_diff)
         console.print("Windsurf: config removed.")
 
 
-_AGENTS_SENTINEL = "<!-- teamcache-installed -->"
+_TEAMCACHE_START = "<!-- TEAMCACHE:START -->"
+_TEAMCACHE_END = "<!-- TEAMCACHE:END -->"
 
 _AGENTS_INSTRUCTIONS_BLOCK = """\
-<!-- teamcache-installed -->
+<!-- TEAMCACHE:START -->
 ## TeamCache
 At session start: call repo_overview() for a map of the repo.
 Before reading any file: call get_file_context(file_path)
@@ -621,15 +659,17 @@ Before reading any file: call get_file_context(file_path)
 After reading any file (when cached was not "ai"): call
   cache_summary(file_path, your_understanding, language)
 Before any task: call find_relevant_files(task_description)
+<!-- TEAMCACHE:END -->
 """
 
 _CURSORRULES_BLOCK = """\
-<!-- teamcache-installed -->
+<!-- TEAMCACHE:START -->
 # TeamCache
 At session start: call repo_overview() for a map of the repo.
 Before reading any file: call get_file_context(file_path).
 After reading any file (when not ai-cached): call cache_summary(file_path, summary, language).
 Before any task: call find_relevant_files(task_description).
+<!-- TEAMCACHE:END -->
 """
 
 _AIDER_INSTRUCTIONS_FILE = """\
@@ -641,68 +681,208 @@ Before any task: call find_relevant_files(task_description).
 """
 
 
-def _write_mcp_json(config_path: Path, teamcache_bin: str) -> None:
+def _write_mcp_json(
+    config_path: Path,
+    teamcache_bin: str,
+    *,
+    dry_run: bool = False,
+    print_diff: bool = False,
+) -> None:
     import json as _json
-    config_path.parent.mkdir(parents=True, exist_ok=True)
-    existing: dict = {}
+    existing: dict[str, object] = {}
     if config_path.exists():
         try:
             existing = _json.loads(config_path.read_text(encoding="utf-8"))
-        except Exception:  # noqa: BLE001
-            existing = {}
+        except _json.JSONDecodeError as exc:
+            raise click.ClickException(
+                f"malformed JSON in {config_path}; refusing to modify"
+            ) from exc
+        if not isinstance(existing, dict):
+            raise click.ClickException(f"JSON config in {config_path} must be an object")
     servers = existing.setdefault("mcpServers", {})
+    if not isinstance(servers, dict):
+        raise click.ClickException(f"mcpServers in {config_path} must be an object")
     servers["teamcache"] = {"command": teamcache_bin, "args": ["serve"]}
-    _atomic_write_text(config_path, _json.dumps(existing, indent=2) + "\n")
+    _write_text_change(
+        config_path,
+        _json.dumps(existing, indent=2) + "\n",
+        dry_run=dry_run,
+        print_diff=print_diff,
+    )
 
 
-def _remove_mcp_json(config_path: Path) -> None:
+def _remove_mcp_json(
+    config_path: Path,
+    *,
+    dry_run: bool = False,
+    print_diff: bool = False,
+) -> None:
     import json as _json
     if not config_path.exists():
         return
     try:
         data = _json.loads(config_path.read_text(encoding="utf-8"))
-        data.get("mcpServers", {}).pop("teamcache", None)
-        _atomic_write_text(config_path, _json.dumps(data, indent=2) + "\n")
-    except Exception:  # noqa: BLE001
-        pass
+    except _json.JSONDecodeError as exc:
+        raise click.ClickException(
+            f"malformed JSON in {config_path}; refusing to modify"
+        ) from exc
+    if not isinstance(data, dict):
+        raise click.ClickException(f"JSON config in {config_path} must be an object")
+    servers = data.get("mcpServers")
+    if servers is None:
+        return
+    if not isinstance(servers, dict):
+        raise click.ClickException(f"mcpServers in {config_path} must be an object")
+    if "teamcache" not in servers:
+        return
+    servers.pop("teamcache")
+    _write_text_change(
+        config_path,
+        _json.dumps(data, indent=2) + "\n",
+        dry_run=dry_run,
+        print_diff=print_diff,
+    )
 
 
-def _append_instructions_block(path: Path, block: str, sentinel: str) -> None:
+def _append_instructions_block(
+    path: Path,
+    block: str,
+    *,
+    dry_run: bool = False,
+    print_diff: bool = False,
+) -> None:
     if path.exists():
         content = path.read_text(encoding="utf-8")
-        if sentinel in content:
-            return
         newline = "\r\n" if "\r\n" in content else "\n"
     else:
         content = ""
         newline = os.linesep
-    prefix = content
-    if prefix and not prefix.endswith(("\n", "\r")):
-        prefix += newline
-    if prefix:
-        prefix += newline
-    _atomic_write_text(path, prefix + block.replace("\n", newline))
+    updated = _upsert_teamcache_block(content, block.replace("\n", newline), newline)
+    _write_text_change(path, updated, dry_run=dry_run, print_diff=print_diff)
 
 
-def _remove_instructions_block(path: Path, sentinel: str) -> None:
+def _remove_instructions_block(
+    path: Path,
+    *,
+    dry_run: bool = False,
+    print_diff: bool = False,
+) -> None:
     if not path.exists():
         return
     content = path.read_text(encoding="utf-8")
-    if sentinel not in content:
+    updated = _remove_teamcache_blocks(content)
+    if updated == content:
         return
-    # Remove everything from the sentinel line to the next blank-line-separated section
-    # Strategy: remove from sentinel to end of file (block is always appended at end)
-    idx = content.find(sentinel)
-    if idx == -1:
-        return
-    # Walk back to the start of that line
-    start = content.rfind("\n", 0, idx)
-    start = 0 if start == -1 else start
-    trimmed = content[:start].rstrip()
-    _atomic_write_text(path, (trimmed + "\n") if trimmed else "")
+    _write_text_change(path, updated, dry_run=dry_run, print_diff=print_diff)
 
 
-def _write_aider_config(config_path: Path, instructions_rel: str) -> None:
+def _teamcache_block_spans(content: str) -> list[tuple[int, int]]:
+    spans: list[tuple[int, int]] = []
+    search_from = 0
+    while True:
+        start = content.find(_TEAMCACHE_START, search_from)
+        next_end = content.find(_TEAMCACHE_END, search_from)
+        if next_end != -1 and (start == -1 or next_end < start):
+            raise click.ClickException("incomplete TeamCache marker block; refusing to modify")
+        if start == -1:
+            return spans
+        end = content.find(_TEAMCACHE_END, start + len(_TEAMCACHE_START))
+        if end == -1:
+            raise click.ClickException("incomplete TeamCache marker block; refusing to modify")
+        end += len(_TEAMCACHE_END)
+        if content.startswith("\r\n", end):
+            end += 2
+        elif content.startswith("\n", end) or content.startswith("\r", end):
+            end += 1
+        spans.append((start, end))
+        search_from = end
+
+
+def _upsert_teamcache_block(content: str, block: str, newline: str) -> str:
+    spans = _teamcache_block_spans(content)
+    if not spans:
+        return content + block
+
+    first_start, first_end = spans[0]
+    suffix_parts: list[str] = []
+    previous_end = first_end
+    for start, end in spans[1:]:
+        suffix_parts.append(content[previous_end:start])
+        previous_end = end
+    suffix_parts.append(content[previous_end:])
+    return content[:first_start] + block + "".join(suffix_parts)
+
+
+def _remove_teamcache_blocks(content: str) -> str:
+    spans = _teamcache_block_spans(content)
+    if not spans:
+        return content
+    updated = content
+    for start, end in reversed(spans):
+        updated = updated[:start] + updated[end:]
+    return updated
+
+
+def _write_text_change(
+    path: Path,
+    content: str,
+    *,
+    dry_run: bool = False,
+    print_diff: bool = False,
+) -> None:
+    before = path.read_text(encoding="utf-8") if path.exists() else ""
+    if before == content:
+        return
+    if print_diff:
+        _print_text_diff(path, before, content)
+    if dry_run:
+        return
+    if path.exists():
+        _create_teamcache_backup(path)
+    _atomic_write_text(path, content)
+
+
+def _print_text_diff(path: Path, before: str, after: str) -> None:
+    diff = difflib.unified_diff(
+        before.splitlines(keepends=True),
+        after.splitlines(keepends=True),
+        fromfile=str(path),
+        tofile=str(path),
+    )
+    diff_text = "".join(diff)
+    if diff_text:
+        click.echo(diff_text, nl=False)
+
+
+def _create_teamcache_backup(path: Path) -> None:
+    backup_path = path.with_name(path.name + ".teamcache.bak")
+    backup_path.write_bytes(path.read_bytes())
+
+
+def _delete_file_change(
+    path: Path,
+    *,
+    dry_run: bool = False,
+    print_diff: bool = False,
+) -> None:
+    if not path.exists():
+        return
+    before = path.read_text(encoding="utf-8")
+    if print_diff:
+        _print_text_diff(path, before, "")
+    if dry_run:
+        return
+    _create_teamcache_backup(path)
+    path.unlink()
+
+
+def _write_aider_config(
+    config_path: Path,
+    instructions_rel: str,
+    *,
+    dry_run: bool = False,
+    print_diff: bool = False,
+) -> None:
     if config_path.exists():
         content = config_path.read_text(encoding="utf-8")
         if instructions_rel in content:
@@ -711,18 +891,34 @@ def _write_aider_config(config_path: Path, instructions_rel: str) -> None:
         prefix = content
         if prefix and not prefix.endswith(("\n", "\r")):
             prefix += newline
-        _atomic_write_text(config_path, prefix + f"read:\n  - {instructions_rel}\n".replace("\n", newline))
+        _write_text_change(
+            config_path,
+            prefix + f"read:\n  - {instructions_rel}\n".replace("\n", newline),
+            dry_run=dry_run,
+            print_diff=print_diff,
+        )
     else:
-        _atomic_write_text(config_path, f"read:\n  - {instructions_rel}\n")
+        _write_text_change(
+            config_path,
+            f"read:\n  - {instructions_rel}\n",
+            dry_run=dry_run,
+            print_diff=print_diff,
+        )
 
 
-def _remove_aider_config(config_path: Path, instructions_rel: str) -> None:
+def _remove_aider_config(
+    config_path: Path,
+    instructions_rel: str,
+    *,
+    dry_run: bool = False,
+    print_diff: bool = False,
+) -> None:
     if not config_path.exists():
         return
     import re as _re
     content = config_path.read_text(encoding="utf-8")
-    content = _re.sub(rf"\n?\s*-\s*{_re.escape(instructions_rel)}\n?", "\n", content)
-    _atomic_write_text(config_path, content)
+    updated = _re.sub(rf"\n?\s*-\s*{_re.escape(instructions_rel)}\n?", "\n", content)
+    _write_text_change(config_path, updated, dry_run=dry_run, print_diff=print_diff)
 
 
 def _index_file(
@@ -1050,11 +1246,13 @@ def _ensure_gitignore_entry(path: Path, entry: str) -> None:
     _atomic_write_text(path, prefix + entry + newline)
 
 
-_CLAUDE_SENTINEL = "<!-- teamcache-installed -->"
-
-
-def _append_claude_instructions(path: Path) -> None:
-    block = """<!-- teamcache-installed -->
+def _append_claude_instructions(
+    path: Path,
+    *,
+    dry_run: bool = False,
+    print_diff: bool = False,
+) -> None:
+    block = """<!-- TEAMCACHE:START -->
 ## TeamCache
 At session start: call repo_overview() for a map of the repo.
 Before reading any file: call get_file_context(file_path)
@@ -1068,22 +1266,9 @@ After reading any file (when cached was not "ai"): call
   dependencies, important side effects, entry points.
   This is stored in git and shared with your whole team.
 Before any task: call find_relevant_files(task_description)
+<!-- TEAMCACHE:END -->
 """
-    if path.exists():
-        content = path.read_text(encoding="utf-8")
-        if _CLAUDE_SENTINEL in content:
-            return
-        newline = "\r\n" if "\r\n" in content else "\n"
-    else:
-        content = ""
-        newline = os.linesep
-
-    prefix = content
-    if prefix and not prefix.endswith(("\n", "\r")):
-        prefix += newline
-    if prefix:
-        prefix += newline
-    _atomic_write_text(path, prefix + block.replace("\n", newline))
+    _append_instructions_block(path, block, dry_run=dry_run, print_diff=print_diff)
 
 
 def _atomic_write_text(path: Path, content: str) -> None:
