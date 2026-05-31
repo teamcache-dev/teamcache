@@ -1,0 +1,15 @@
+{
+  "cache_key": "35f38188c5cafa5c2d3c6b711af318f1078bcc09c3d3ae42187b8c4a94b2624b",
+  "file_path": ".github/workflows/publish.yml",
+  "file_hash": "2040ac62f9d8870be91752edea2fbeaa2124924fb86b61844f61f3a0ad74349e",
+  "schema_version": "v1",
+  "language": "yaml",
+  "symbols": {
+    "functions": [],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "created_at": "2026-05-31T04:18:45.187371Z",
+  "created_by": "unknown"
+}
