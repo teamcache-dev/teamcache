@@ -1,7 +1,7 @@
 {
   "schema_version": "v1",
-  "generated_at": "2026-05-31T04:30:57.115124Z",
-  "total_files": 60,
+  "generated_at": "2026-05-31T04:34:17.006875Z",
+  "total_files": 61,
   "languages": {
     "javascript": 1,
     "json": 5,
@@ -9,7 +9,7 @@
     "python": 37,
     "toml": 2,
     "unknown": 6,
-    "yaml": 7
+    "yaml": 8
   },
   "entry_points": [],
   "top_symbols": [
