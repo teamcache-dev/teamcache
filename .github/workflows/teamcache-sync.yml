@@ -21,7 +21,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install teamcache
-        run: pip install -e ".[symbols]"
+        run: pip install teamcache
 
       - name: Sync index from committed objects
         run: teamcache sync
