@@ -1,0 +1,12 @@
+{
+  "cache_key": "07cec6b416883cfbe664bdf5ac42f39c102d79efe854cb17e7b79aeace9646ee",
+  "file_path": "teamcache/files.py",
+  "file_hash": "19c70c550bdcc1a33aa3b237a63111ed6a8753a9fdd7131ba0dcb6741df59600",
+  "summary": "imports: hashlib, json, os, re, subprocess, pathlib, typing, BINARY_EXTENSIONS | functions: iter_repo_files, is_binary_content, should_skip_metadata, static_summary, cache_key, file_hash, write_summary_object, git_user_email, _append, _unique, _go_imports",
+  "summary_type": "static",
+  "schema_version": "v1",
+  "created_at": "2026-05-30T20:34:20.114411Z",
+  "created_by": "aiwithsiddhesh@gmail.com",
+  "file_size_bytes": 5473,
+  "language": "python"
+}

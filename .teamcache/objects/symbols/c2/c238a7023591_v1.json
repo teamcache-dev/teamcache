@@ -1,0 +1,178 @@
+{
+  "cache_key": "c238a7023591006df8c896dee278a6605811c8acb45d26572900fd7364d368cd",
+  "file_path": "teamcache/symbols.py",
+  "file_hash": "d3a6875749fb92ceeb5fa3023ccc8bf00d271d72fda30fe41a0905c4fd7a6681",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "extract_symbols",
+        "line": 14,
+        "signature": "def extract_symbols(path: Path, language: str, text: str) -> dict[str, Any]:"
+      },
+      {
+        "name": "write_symbol_object",
+        "line": 42,
+        "signature": "def write_symbol_object(symbols_root: Path, key: str, obj: dict[str, Any]) -> None:"
+      },
+      {
+        "name": "summary_from_symbols",
+        "line": 51,
+        "signature": "def summary_from_symbols(symbols: dict[str, Any], language: str) -> str:"
+      },
+      {
+        "name": "_empty_symbols",
+        "line": 61,
+        "signature": "def _empty_symbols() -> dict[str, Any]:"
+      },
+      {
+        "name": "_get_parser",
+        "line": 65,
+        "signature": "def _get_parser(language: str) -> Any | None:"
+      },
+      {
+        "name": "_extract_python",
+        "line": 113,
+        "signature": "def _extract_python(root: Any, source: bytes, symbols: dict[str, Any]) -> None:"
+      },
+      {
+        "name": "_extract_js_ts",
+        "line": 139,
+        "signature": "def _extract_js_ts(root: Any, source: bytes, symbols: dict[str, Any]) -> None:"
+      },
+      {
+        "name": "_extract_go",
+        "line": 181,
+        "signature": "def _extract_go(root: Any, source: bytes, symbols: dict[str, Any]) -> None:"
+      },
+      {
+        "name": "_extract_java",
+        "line": 205,
+        "signature": "def _extract_java(root: Any, source: bytes, symbols: dict[str, Any]) -> None:"
+      },
+      {
+        "name": "_extract_rust",
+        "line": 230,
+        "signature": "def _extract_rust(root: Any, source: bytes, symbols: dict[str, Any]) -> None:"
+      },
+      {
+        "name": "_fallback_symbols",
+        "line": 247,
+        "signature": "def _fallback_symbols(path: Path, language: str, text: str) -> dict[str, Any]:"
+      },
+      {
+        "name": "_function_obj",
+        "line": 267,
+        "signature": "def _function_obj(name: str, node: Any, source: bytes) -> dict[str, Any]:"
+      },
+      {
+        "name": "_node_name",
+        "line": 271,
+        "signature": "def _node_name(node: Any, source: bytes) -> str | None:"
+      },
+      {
+        "name": "_python_import_name",
+        "line": 286,
+        "signature": "def _python_import_name(node: Any, source: bytes) -> str | None:"
+      },
+      {
+        "name": "_java_import_name",
+        "line": 300,
+        "signature": "def _java_import_name(node: Any, source: bytes) -> str | None:"
+      },
+      {
+        "name": "_rust_use_name",
+        "line": 306,
+        "signature": "def _rust_use_name(node: Any, source: bytes) -> str | None:"
+      },
+      {
+        "name": "_go_receiver",
+        "line": 312,
+        "signature": "def _go_receiver(node: Any, source: bytes) -> str | None:"
+      },
+      {
+        "name": "_exported_name",
+        "line": 320,
+        "signature": "def _exported_name(node: Any, source: bytes) -> str | None:"
+      },
+      {
+        "name": "_string_child_value",
+        "line": 335,
+        "signature": "def _string_child_value(node: Any, source: bytes) -> str | None:"
+      },
+      {
+        "name": "_field",
+        "line": 347,
+        "signature": "def _field(node: Any, field_name: str) -> Any | None:"
+      },
+      {
+        "name": "_decorated_definition",
+        "line": 354,
+        "signature": "def _decorated_definition(node: Any) -> Any:"
+      },
+      {
+        "name": "_walk",
+        "line": 363,
+        "signature": "def _walk(node: Any) -> list[Any]:"
+      },
+      {
+        "name": "_nodes_of_type",
+        "line": 370,
+        "signature": "def _nodes_of_type(node: Any, types: set[str]) -> list[Any]:"
+      },
+      {
+        "name": "_text",
+        "line": 374,
+        "signature": "def _text(node: Any, source: bytes) -> str:"
+      },
+      {
+        "name": "_first_line",
+        "line": 378,
+        "signature": "def _first_line(node: Any, source: bytes) -> str:"
+      },
+      {
+        "name": "_strip_quotes",
+        "line": 385,
+        "signature": "def _strip_quotes(value: str) -> str:"
+      },
+      {
+        "name": "_append",
+        "line": 389,
+        "signature": "def _append(parts: list[str], label: str, values: list[str]) -> None:"
+      },
+      {
+        "name": "_string_values",
+        "line": 394,
+        "signature": "def _string_values(values: Any) -> list[str]:"
+      },
+      {
+        "name": "_named_values",
+        "line": 402,
+        "signature": "def _named_values(values: Any) -> list[str]:"
+      },
+      {
+        "name": "_dedupe_symbols",
+        "line": 412,
+        "signature": "def _dedupe_symbols(symbols: dict[str, Any]) -> dict[str, Any]:"
+      },
+      {
+        "name": "_unique",
+        "line": 430,
+        "signature": "def _unique(values: list[str]) -> list[str]:"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "json",
+      "os",
+      "re",
+      "pathlib",
+      "typing",
+      ".files"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-05-30T21:04:12.126775Z",
+  "created_by": "aiwithsiddhesh@gmail.com"
+}

@@ -1,0 +1,21 @@
+{
+  "cache_key": "c45ff9af1cd436fefb43ae9eb6f0898a524aca3eda88f94d9d03b8f3b236653f",
+  "file_path": "TEAMCACHE_COMPLETE_SPEC.md",
+  "file_hash": "76830328d8d9cf9de4fef7fcc5aa09dc92c7d01a8bddca3b772b0b337f6b3e98",
+  "schema_version": "v1",
+  "language": "markdown",
+  "symbols": {
+    "functions": [
+      {
+        "name": "is_binary",
+        "line": null,
+        "signature": "is_binary"
+      }
+    ],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "created_at": "2026-05-30T20:34:19.936056Z",
+  "created_by": "aiwithsiddhesh@gmail.com"
+}

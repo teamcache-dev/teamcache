@@ -1,0 +1,110 @@
+{
+  "cache_key": "05238bb35f7e5673c6b3074a7f1acf410cc1fda32e749d0a9b4f77147ac01d67",
+  "file_path": "teamcache/cli.py",
+  "file_hash": "52098414beff33c129c8fc8761480d56c95cfb98eb50faf9c4d91a2c1f957d80",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "cli",
+        "line": 58,
+        "signature": "def cli() -> None:"
+      },
+      {
+        "name": "init",
+        "line": 63,
+        "signature": "def init() -> None:"
+      },
+      {
+        "name": "index",
+        "line": 92,
+        "signature": "def index() -> None:"
+      },
+      {
+        "name": "changed",
+        "line": 131,
+        "signature": "def changed(since_branch: str) -> None:"
+      },
+      {
+        "name": "sync",
+        "line": 176,
+        "signature": "def sync(quiet: bool) -> None:"
+      },
+      {
+        "name": "invalidate",
+        "line": 197,
+        "signature": "def invalidate(file_path: str | None, stale: bool, all_entries: bool, quiet: bool) -> None:"
+      },
+      {
+        "name": "serve",
+        "line": 223,
+        "signature": "def serve() -> None:"
+      },
+      {
+        "name": "install",
+        "line": 230,
+        "signature": "def install() -> None:"
+      },
+      {
+        "name": "_index_file",
+        "line": 291,
+        "signature": "def _index_file("
+      },
+      {
+        "name": "_write_repomap",
+        "line": 354,
+        "signature": "def _write_repomap(root: Path) -> None:"
+      },
+      {
+        "name": "_install_post_merge_hook",
+        "line": 398,
+        "signature": "def _install_post_merge_hook(repo_root: Path) -> bool:"
+      },
+      {
+        "name": "_first_warning_line",
+        "line": 424,
+        "signature": "def _first_warning_line(detail: str) -> str:"
+      },
+      {
+        "name": "_ensure_gitignore_entry",
+        "line": 432,
+        "signature": "def _ensure_gitignore_entry(path: Path, entry: str) -> None:"
+      },
+      {
+        "name": "_append_claude_instructions",
+        "line": 454,
+        "signature": "def _append_claude_instructions(path: Path) -> None:"
+      },
+      {
+        "name": "_atomic_write_text",
+        "line": 487,
+        "signature": "def _atomic_write_text(path: Path, content: str) -> None:"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "os",
+      "shutil",
+      "subprocess",
+      "sys",
+      "json",
+      "collections",
+      "datetime",
+      "pathlib",
+      "click",
+      "rich.console",
+      "rich.markup",
+      "rich.progress",
+      "TeamCacheConfig",
+      "EMBEDDINGS_DB",
+      "connect",
+      "connect_embeddings",
+      "cache_key",
+      "extract_symbols"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-05-30T20:37:01.284184Z",
+  "created_by": "aiwithsiddhesh@gmail.com"
+}

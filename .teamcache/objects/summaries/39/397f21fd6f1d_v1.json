@@ -1,0 +1,12 @@
+{
+  "cache_key": "397f21fd6f1d0af006a3324571832f7df5be986ea6fb88f470d4d75655ab0531",
+  "file_path": "teamcache/cli.py",
+  "file_hash": "b92d279a90b1feb1b2e0cf0d72e97c86f921d5547faf46562e0ed7c0d9db8834",
+  "summary": "imports: os, shutil, subprocess, sys, json, collections, datetime, pathlib, click, rich.console, rich.progress, TeamCacheConfig, EMBEDDINGS_DB, connect, connect_embeddings, cache_key, extract_symbols | functions: _index_file, _write_repomap, _install_post_merge_hook, _ensure_gitignore_entry, _append_claude_instructions, _atomic_write_text",
+  "summary_type": "static",
+  "schema_version": "v1",
+  "created_at": "2026-05-30T20:34:20.068047Z",
+  "created_by": "aiwithsiddhesh@gmail.com",
+  "file_size_bytes": 16120,
+  "language": "python"
+}

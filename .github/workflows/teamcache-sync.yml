@@ -1,0 +1,41 @@
+name: TeamCache Sync
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install teamcache
+        run: pip install teamcache
+
+      - name: Sync index from committed objects
+        run: teamcache sync
+
+      - name: Remove stale summaries
+        run: teamcache invalidate --stale
+
+      - name: Index any new files
+        run: teamcache index
+
+      - name: Commit updated cache objects
+        run: |
+          git config user.email "github-actions@github.com"
+          git config user.name "github-actions"
+          git add .teamcache/objects/
+          git diff --staged --quiet || git commit -m "chore: teamcache sync [skip ci]"
+          git push

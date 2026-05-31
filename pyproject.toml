@@ -1,0 +1,68 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "teamcache"
+dynamic = ["version"]
+description = "Shared AI context cache for software teams — eliminate the cold start"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [{ name = "TeamCache Contributors" }]
+keywords = ["ai", "mcp", "claude", "context", "cache", "developer-tools"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "mcp>=1.0.0",
+    "click>=8.0.0",
+    "pyyaml>=6.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+symbols = [
+    "tree-sitter>=0.21.0",
+    "tree-sitter-python>=0.21.0",
+    "tree-sitter-javascript>=0.21.0",
+    "tree-sitter-typescript>=0.21.0",
+    "tree-sitter-go>=0.21.0",
+    "tree-sitter-java>=0.21.0",
+    "tree-sitter-rust>=0.21.0",
+]
+embeddings = [
+    "sentence-transformers>=2.2.0",
+]
+all = [
+    "teamcache[symbols,embeddings]",
+]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
+]
+
+[project.scripts]
+teamcache = "teamcache.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/teamcache/teamcache"
+Documentation = "https://github.com/teamcache/teamcache#readme"
+Repository = "https://github.com/teamcache/teamcache"
+Issues = "https://github.com/teamcache/teamcache/issues"
+
+[tool.hatch.version]
+path = "teamcache/__init__.py"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

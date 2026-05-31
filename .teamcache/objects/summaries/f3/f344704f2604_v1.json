@@ -1,0 +1,12 @@
+{
+  "cache_key": "f344704f26048ee5385840e429a5fe686ec9bff5f602b9f9ed83a08ab26a1ae3",
+  "file_path": "teamcache/mcp_server.py",
+  "file_hash": "d3abfff20ebfe47cd3934ef9b7b8a2f285658434d116e98341dbf7095607ad26",
+  "summary": "imports: os, subprocess, datetime, pathlib, typing, mcp.server.fastmcp, .config, .constants, .db, .embeddings, .files | functions: run_server, _repo_overview, _repo_scan, _semantic_results, _merge_relevance_results, _symbol_line, _sanitize_path",
+  "summary_type": "static",
+  "schema_version": "v1",
+  "created_at": "2026-05-30T20:52:35.334584Z",
+  "created_by": "aiwithsiddhesh@gmail.com",
+  "file_size_bytes": 13944,
+  "language": "python"
+}

@@ -1,0 +1,36 @@
+{
+  "cache_key": "13d63d932f2ed41170d0ba3ecd657f7c34c444ad85c38c9d28edaf3f4026a4f8",
+  "file_path": "teamcache/config.py",
+  "file_hash": "f12ec3b91db2e2f443465bafeb509be9af41dc4a199cf01bc2977b68917addcd",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "find_repo_root",
+        "line": 16,
+        "signature": "def find_repo_root(start: Path | None = None) -> Path:"
+      },
+      {
+        "name": "load_config",
+        "line": 24,
+        "signature": "def load_config(repo_root: Path) -> TeamCacheConfig:"
+      },
+      {
+        "name": "write_config",
+        "line": 30,
+        "signature": "def write_config(repo_root: Path, config: TeamCacheConfig) -> None:"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "dataclasses",
+      "pathlib",
+      "yaml",
+      "CONFIG_FILE"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-05-30T20:34:20.076896Z",
+  "created_by": "aiwithsiddhesh@gmail.com"
+}

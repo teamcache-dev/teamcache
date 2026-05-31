@@ -1,0 +1,80 @@
+{
+  "cache_key": "07cec6b416883cfbe664bdf5ac42f39c102d79efe854cb17e7b79aeace9646ee",
+  "file_path": "teamcache/files.py",
+  "file_hash": "19c70c550bdcc1a33aa3b237a63111ed6a8753a9fdd7131ba0dcb6741df59600",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "iter_repo_files",
+        "line": 19,
+        "signature": "def iter_repo_files(root: Path) -> Iterator[Path]:"
+      },
+      {
+        "name": "is_binary_content",
+        "line": 26,
+        "signature": "def is_binary_content(path: Path, content: bytes) -> bool:"
+      },
+      {
+        "name": "should_skip_metadata",
+        "line": 32,
+        "signature": "def should_skip_metadata(path: Path) -> bool:"
+      },
+      {
+        "name": "static_summary",
+        "line": 43,
+        "signature": "def static_summary(path: Path, language: str, text: str | None = None) -> str:"
+      },
+      {
+        "name": "cache_key",
+        "line": 111,
+        "signature": "def cache_key(file_hash: str, schema_version: str) -> str:"
+      },
+      {
+        "name": "file_hash",
+        "line": 115,
+        "signature": "def file_hash(content: bytes) -> str:"
+      },
+      {
+        "name": "write_summary_object",
+        "line": 119,
+        "signature": "def write_summary_object(summaries_root: Path, key: str, obj: dict[str, object]) -> None:"
+      },
+      {
+        "name": "git_user_email",
+        "line": 130,
+        "signature": "def git_user_email(repo_root: Path) -> str:"
+      },
+      {
+        "name": "_append",
+        "line": 145,
+        "signature": "def _append(parts: list[str], label: str, values: list[str]) -> None:"
+      },
+      {
+        "name": "_unique",
+        "line": 150,
+        "signature": "def _unique(values: list[str]) -> list[str]:"
+      },
+      {
+        "name": "_go_imports",
+        "line": 161,
+        "signature": "def _go_imports(text: str) -> list[str]:"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "hashlib",
+      "json",
+      "os",
+      "re",
+      "subprocess",
+      "pathlib",
+      "typing",
+      "BINARY_EXTENSIONS"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-05-30T20:34:20.114411Z",
+  "created_by": "aiwithsiddhesh@gmail.com"
+}

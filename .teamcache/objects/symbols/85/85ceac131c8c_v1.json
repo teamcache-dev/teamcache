@@ -1,0 +1,21 @@
+{
+  "cache_key": "85ceac131c8ca64a905dadb143bfc6f8aa5ce015ec2d5f587557e74fafdac666",
+  "file_path": "teamcache/search.py",
+  "file_hash": "66429a412009f883207d07d1ffd2a7f62288f47e9f1f9c92b99202dd56848ebb",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "normalize_fts_query",
+        "line": 4,
+        "signature": "def normalize_fts_query(query: str) -> str:"
+      }
+    ],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "created_at": "2026-05-30T20:34:20.136369Z",
+  "created_by": "aiwithsiddhesh@gmail.com"
+}

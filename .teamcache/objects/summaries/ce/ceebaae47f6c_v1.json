@@ -1,0 +1,12 @@
+{
+  "cache_key": "ceebaae47f6c1393745d14e0cf67b562d50e304f4a211dcf59f99cec8aff1a91",
+  "file_path": "teamcache/embeddings.py",
+  "file_hash": "030e6e6e1c6c1dd21480870c54817492f89acffb823d93add036be1653b37196",
+  "summary": "imports: os, sqlite3, datetime, pathlib, typing | functions: connect_embeddings, get_model, upsert_embedding, semantic_search",
+  "summary_type": "static",
+  "schema_version": "v1",
+  "created_at": "2026-05-30T20:34:20.104024Z",
+  "created_by": "aiwithsiddhesh@gmail.com",
+  "file_size_bytes": 3595,
+  "language": "python"
+}

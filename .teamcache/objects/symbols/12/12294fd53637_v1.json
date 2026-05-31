@@ -1,0 +1,140 @@
+{
+  "cache_key": "12294fd53637180fb5fc3110dd5367dbcbd1a470302008d2caa927a8118dfa29",
+  "file_path": "teamcache/cli.py",
+  "file_hash": "2d88623447dbb5db02b801be4be0fd0ea0bdc9b1d6a5951361e5ed861729b1a2",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "cli",
+        "line": 58,
+        "signature": "def cli() -> None:"
+      },
+      {
+        "name": "init",
+        "line": 63,
+        "signature": "def init() -> None:"
+      },
+      {
+        "name": "index",
+        "line": 92,
+        "signature": "def index() -> None:"
+      },
+      {
+        "name": "changed",
+        "line": 131,
+        "signature": "def changed(since_branch: str) -> None:"
+      },
+      {
+        "name": "sync",
+        "line": 176,
+        "signature": "def sync(quiet: bool) -> None:"
+      },
+      {
+        "name": "invalidate",
+        "line": 197,
+        "signature": "def invalidate(file_path: str | None, stale: bool, all_entries: bool, quiet: bool) -> None:"
+      },
+      {
+        "name": "serve",
+        "line": 223,
+        "signature": "def serve() -> None:"
+      },
+      {
+        "name": "install",
+        "line": 230,
+        "signature": "def install() -> None:"
+      },
+      {
+        "name": "_index_file",
+        "line": 291,
+        "signature": "def _index_file("
+      },
+      {
+        "name": "_read_summary_object",
+        "line": 376,
+        "signature": "def _read_summary_object(summaries_root: Path, key: str) -> dict[str, object] | None:"
+      },
+      {
+        "name": "_read_symbol_object",
+        "line": 390,
+        "signature": "def _read_symbol_object(symbols_root: Path, key: str) -> dict[str, object] | None:"
+      },
+      {
+        "name": "_summary_object_for_path",
+        "line": 404,
+        "signature": "def _summary_object_for_path("
+      },
+      {
+        "name": "_symbol_object_for_path",
+        "line": 421,
+        "signature": "def _symbol_object_for_path("
+      },
+      {
+        "name": "_write_repomap",
+        "line": 436,
+        "signature": "def _write_repomap(root: Path) -> None:"
+      },
+      {
+        "name": "_module_aliases",
+        "line": 488,
+        "signature": "def _module_aliases(file_path: str) -> list[str]:"
+      },
+      {
+        "name": "_import_lookup_keys",
+        "line": 499,
+        "signature": "def _import_lookup_keys(import_name: str) -> list[str]:"
+      },
+      {
+        "name": "_install_post_merge_hook",
+        "line": 518,
+        "signature": "def _install_post_merge_hook(repo_root: Path) -> bool:"
+      },
+      {
+        "name": "_first_warning_line",
+        "line": 554,
+        "signature": "def _first_warning_line(detail: str) -> str:"
+      },
+      {
+        "name": "_ensure_gitignore_entry",
+        "line": 562,
+        "signature": "def _ensure_gitignore_entry(path: Path, entry: str) -> None:"
+      },
+      {
+        "name": "_append_claude_instructions",
+        "line": 584,
+        "signature": "def _append_claude_instructions(path: Path) -> None:"
+      },
+      {
+        "name": "_atomic_write_text",
+        "line": 617,
+        "signature": "def _atomic_write_text(path: Path, content: str) -> None:"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "os",
+      "shutil",
+      "subprocess",
+      "sys",
+      "json",
+      "collections",
+      "datetime",
+      "pathlib",
+      "click",
+      "rich.console",
+      "rich.markup",
+      "rich.progress",
+      ".config",
+      ".constants",
+      ".db",
+      ".embeddings",
+      ".files",
+      ".symbols"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-05-30T21:04:12.083060Z",
+  "created_by": "aiwithsiddhesh@gmail.com"
+}

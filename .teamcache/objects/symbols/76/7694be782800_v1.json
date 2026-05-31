@@ -1,0 +1,125 @@
+{
+  "cache_key": "7694be78280066dcc500ee78c9b832a9028911bbe2c20209c162b997320ba136",
+  "file_path": "teamcache/cli.py",
+  "file_hash": "833d418382f52a0de91efd93cb7c620fa82104644d1d693ee699be7954418a8a",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "cli",
+        "line": 58,
+        "signature": "def cli() -> None:"
+      },
+      {
+        "name": "init",
+        "line": 63,
+        "signature": "def init() -> None:"
+      },
+      {
+        "name": "index",
+        "line": 92,
+        "signature": "def index() -> None:"
+      },
+      {
+        "name": "changed",
+        "line": 131,
+        "signature": "def changed(since_branch: str) -> None:"
+      },
+      {
+        "name": "sync",
+        "line": 176,
+        "signature": "def sync(quiet: bool) -> None:"
+      },
+      {
+        "name": "invalidate",
+        "line": 197,
+        "signature": "def invalidate(file_path: str | None, stale: bool, all_entries: bool, quiet: bool) -> None:"
+      },
+      {
+        "name": "serve",
+        "line": 223,
+        "signature": "def serve() -> None:"
+      },
+      {
+        "name": "install",
+        "line": 230,
+        "signature": "def install() -> None:"
+      },
+      {
+        "name": "_index_file",
+        "line": 291,
+        "signature": "def _index_file("
+      },
+      {
+        "name": "_read_summary_object",
+        "line": 370,
+        "signature": "def _read_summary_object(summaries_root: Path, key: str) -> dict[str, object] | None:"
+      },
+      {
+        "name": "_read_symbol_object",
+        "line": 381,
+        "signature": "def _read_symbol_object(symbols_root: Path, key: str) -> dict[str, object] | None:"
+      },
+      {
+        "name": "_write_repomap",
+        "line": 392,
+        "signature": "def _write_repomap(root: Path) -> None:"
+      },
+      {
+        "name": "_module_aliases",
+        "line": 439,
+        "signature": "def _module_aliases(file_path: str) -> list[str]:"
+      },
+      {
+        "name": "_install_post_merge_hook",
+        "line": 450,
+        "signature": "def _install_post_merge_hook(repo_root: Path) -> bool:"
+      },
+      {
+        "name": "_first_warning_line",
+        "line": 486,
+        "signature": "def _first_warning_line(detail: str) -> str:"
+      },
+      {
+        "name": "_ensure_gitignore_entry",
+        "line": 494,
+        "signature": "def _ensure_gitignore_entry(path: Path, entry: str) -> None:"
+      },
+      {
+        "name": "_append_claude_instructions",
+        "line": 516,
+        "signature": "def _append_claude_instructions(path: Path) -> None:"
+      },
+      {
+        "name": "_atomic_write_text",
+        "line": 549,
+        "signature": "def _atomic_write_text(path: Path, content: str) -> None:"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "os",
+      "shutil",
+      "subprocess",
+      "sys",
+      "json",
+      "collections",
+      "datetime",
+      "pathlib",
+      "click",
+      "rich.console",
+      "rich.markup",
+      "rich.progress",
+      ".config",
+      ".constants",
+      ".db",
+      ".embeddings",
+      ".files",
+      ".symbols"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-05-30T20:52:35.289526Z",
+  "created_by": "aiwithsiddhesh@gmail.com"
+}

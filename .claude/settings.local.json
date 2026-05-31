@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip show *)",
+      "Bash(python -c \"import magic; print\\(magic.__file__\\)\")",
+      "Bash(python *)",
+      "Bash(Get-ChildItem -Path \"E:\\\\dev\\\\team-cache\" -Recurse -Include \"*.py\", \"*.json\", \"*.yaml\", \"*.yml\", \"*.md\")",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(sed 's/def //')",
+      "Bash(sed 's/\\(.*$//')",
+      "Bash(pip install *)",
+      "Bash(teamcache --help)",
+      "Bash(where teamcache *)"
+    ]
+  }
+}

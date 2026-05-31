@@ -1,0 +1,12 @@
+{
+  "cache_key": "12294fd53637180fb5fc3110dd5367dbcbd1a470302008d2caa927a8118dfa29",
+  "file_path": "teamcache/cli.py",
+  "file_hash": "2d88623447dbb5db02b801be4be0fd0ea0bdc9b1d6a5951361e5ed861729b1a2",
+  "summary": "imports: os, shutil, subprocess, sys, json, collections, datetime, pathlib, click, rich.console, rich.markup, rich.progress, .config, .constants, .db, .embeddings, .files, .symbols | functions: cli, init, index, changed, sync, invalidate, serve, install, _index_file, _read_summary_object, _read_symbol_object, _summary_object_for_path, _symbol_object_for_path, _write_repomap, _module_aliases, _import_lookup_keys, _install_post_merge_hook, _first_warning_line, _ensure_gitignore_entry, _append_claude_instructions, _atomic_write_text",
+  "summary_type": "static",
+  "schema_version": "v1",
+  "created_at": "2026-05-30T21:04:12.083060Z",
+  "created_by": "aiwithsiddhesh@gmail.com",
+  "file_size_bytes": 20890,
+  "language": "python"
+}

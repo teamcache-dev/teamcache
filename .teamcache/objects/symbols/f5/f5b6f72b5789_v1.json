@@ -1,0 +1,15 @@
+{
+  "cache_key": "f5b6f72b5789a09c03925142b67b785b1277caa031a5b6e6058ea2521c7b4634",
+  "file_path": "pyproject.toml",
+  "file_hash": "97f6a4d1112d12fa3ac077e5c2a5420cec1cdb7157ba3b5170527ecc92213580",
+  "schema_version": "v1",
+  "language": "toml",
+  "symbols": {
+    "functions": [],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "created_at": "2026-05-30T20:34:19.926180Z",
+  "created_by": "aiwithsiddhesh@gmail.com"
+}

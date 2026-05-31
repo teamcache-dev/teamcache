@@ -1,0 +1,124 @@
+{
+  "cache_key": "13e7929a459e378cbdb5c8c1ec606fc00491ac723af9d8ed37ed144935b13ed7",
+  "file_path": "teamcache/db.py",
+  "file_hash": "5d7a99f92c6e5d42e6c3cea9df4f378790197997a244fc550ca9b18edf36ed39",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "connect",
+        "line": 13,
+        "signature": "def connect(db_path: Path) -> sqlite3.Connection:"
+      },
+      {
+        "name": "insert_summary",
+        "line": 91,
+        "signature": "def insert_summary(conn: sqlite3.Connection, obj: dict[str, Any], commit: bool = True) -> None:"
+      },
+      {
+        "name": "get_summary",
+        "line": 156,
+        "signature": "def get_summary(conn: sqlite3.Connection, cache_key: str) -> dict[str, Any] | None:"
+      },
+      {
+        "name": "get_summary_by_path",
+        "line": 164,
+        "signature": "def get_summary_by_path(conn: sqlite3.Connection, file_path: str) -> dict[str, Any] | None:"
+      },
+      {
+        "name": "keyword_search",
+        "line": 177,
+        "signature": "def keyword_search("
+      },
+      {
+        "name": "rebuild_from_objects",
+        "line": 212,
+        "signature": "def rebuild_from_objects(conn: sqlite3.Connection, summaries_root: Path) -> None:"
+      },
+      {
+        "name": "optimize_fts",
+        "line": 224,
+        "signature": "def optimize_fts(conn: sqlite3.Connection) -> None:"
+      },
+      {
+        "name": "count_by_type",
+        "line": 230,
+        "signature": "def count_by_type(conn: sqlite3.Connection) -> dict[str, int]:"
+      },
+      {
+        "name": "insert_symbol",
+        "line": 242,
+        "signature": "def insert_symbol(conn: sqlite3.Connection, obj: dict[str, Any], commit: bool = True) -> None:"
+      },
+      {
+        "name": "get_symbol",
+        "line": 294,
+        "signature": "def get_symbol(conn: sqlite3.Connection, cache_key: str) -> dict[str, Any] | None:"
+      },
+      {
+        "name": "get_symbol_by_path",
+        "line": 302,
+        "signature": "def get_symbol_by_path(conn: sqlite3.Connection, file_path: str) -> dict[str, Any] | None:"
+      },
+      {
+        "name": "find_symbol_by_name",
+        "line": 315,
+        "signature": "def find_symbol_by_name("
+      },
+      {
+        "name": "rebuild_symbols",
+        "line": 350,
+        "signature": "def rebuild_symbols(conn: sqlite3.Connection, symbols_root: Path) -> int:"
+      },
+      {
+        "name": "invalidate_by_path",
+        "line": 365,
+        "signature": "def invalidate_by_path(conn: sqlite3.Connection, file_path: str) -> None:"
+      },
+      {
+        "name": "invalidate_stale",
+        "line": 383,
+        "signature": "def invalidate_stale(conn: sqlite3.Connection, days: int = 30) -> int:"
+      },
+      {
+        "name": "invalidate_all",
+        "line": 409,
+        "signature": "def invalidate_all(conn: sqlite3.Connection) -> None:"
+      },
+      {
+        "name": "summary_count",
+        "line": 417,
+        "signature": "def summary_count(conn: sqlite3.Connection) -> int:"
+      },
+      {
+        "name": "symbol_count",
+        "line": 421,
+        "signature": "def symbol_count(conn: sqlite3.Connection) -> int:"
+      },
+      {
+        "name": "_symbol_row_to_dict",
+        "line": 425,
+        "signature": "def _symbol_row_to_dict(row: sqlite3.Row) -> dict[str, Any]:"
+      },
+      {
+        "name": "_symbol_names",
+        "line": 431,
+        "signature": "def _symbol_names(symbols: dict[str, Any]) -> str:"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "json",
+      "sqlite3",
+      "sys",
+      "datetime",
+      "pathlib",
+      "typing",
+      "normalize_fts_query"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-05-30T20:34:20.094998Z",
+  "created_by": "aiwithsiddhesh@gmail.com"
+}

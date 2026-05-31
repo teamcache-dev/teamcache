@@ -1,0 +1,504 @@
+from __future__ import annotations
+
+import json
+import sqlite3
+import sys
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any
+
+from .search import normalize_fts_query
+
+
+def connect(db_path: Path) -> sqlite3.Connection:
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(db_path, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA foreign_keys=ON")
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS summaries (
+            cache_key TEXT PRIMARY KEY,
+            file_path TEXT NOT NULL,
+            file_hash TEXT NOT NULL,
+            summary TEXT NOT NULL,
+            summary_type TEXT NOT NULL,
+            language TEXT,
+            created_at TEXT,
+            created_by TEXT,
+            file_size_bytes INTEGER,
+            schema_version TEXT
+        )
+        """
+    )
+    existing_fts = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'fts_summaries'"
+    ).fetchone()
+    if existing_fts:
+        fts_sql = existing_fts["sql"] or ""
+        if "content=" in fts_sql.lower() or "language" not in fts_sql:
+            conn.execute("DROP TABLE fts_summaries")
+    conn.execute(
+        """
+        CREATE VIRTUAL TABLE IF NOT EXISTS fts_summaries USING fts5(
+            file_path,
+            summary,
+            language,
+            tokenize='unicode61'
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_summaries_file_path ON summaries(file_path)"
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS symbols (
+            cache_key TEXT PRIMARY KEY,
+            file_path TEXT NOT NULL,
+            file_hash TEXT NOT NULL,
+            language TEXT,
+            symbols_json TEXT NOT NULL,
+            created_at TEXT,
+            schema_version TEXT
+        )
+        """
+    )
+    existing_symbol_fts = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'fts_symbols'"
+    ).fetchone()
+    if existing_symbol_fts:
+        fts_sql = existing_symbol_fts["sql"] or ""
+        if "symbol_names" not in fts_sql:
+            conn.execute("DROP TABLE fts_symbols")
+    conn.execute(
+        """
+        CREATE VIRTUAL TABLE IF NOT EXISTS fts_symbols USING fts5(
+            file_path,
+            symbol_names,
+            tokenize='unicode61'
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_symbols_file_path ON symbols(file_path)"
+    )
+    conn.commit()
+    return conn
+
+
+def insert_summary(conn: sqlite3.Connection, obj: dict[str, Any], commit: bool = True) -> None:
+    existing = get_summary(conn, obj["cache_key"])
+    if existing and existing["summary_type"] == "ai" and obj["summary_type"] == "static":
+        return
+
+    conn.execute(
+        """
+        INSERT INTO summaries (
+            cache_key,
+            file_path,
+            file_hash,
+            summary,
+            summary_type,
+            language,
+            created_at,
+            created_by,
+            file_size_bytes,
+            schema_version
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(cache_key) DO UPDATE SET
+            file_path = excluded.file_path,
+            file_hash = excluded.file_hash,
+            summary = excluded.summary,
+            summary_type = excluded.summary_type,
+            language = excluded.language,
+            created_at = excluded.created_at,
+            created_by = excluded.created_by,
+            file_size_bytes = excluded.file_size_bytes,
+            schema_version = excluded.schema_version
+        """,
+        (
+            obj["cache_key"],
+            obj["file_path"],
+            obj["file_hash"],
+            obj["summary"],
+            obj["summary_type"],
+            obj.get("language"),
+            obj.get("created_at"),
+            obj.get("created_by"),
+            obj.get("file_size_bytes"),
+            obj.get("schema_version"),
+        ),
+    )
+    row = conn.execute(
+        "SELECT rowid FROM summaries WHERE cache_key = ?",
+        (obj["cache_key"],),
+    ).fetchone()
+    if row:
+        conn.execute("DELETE FROM fts_summaries WHERE rowid = ?", (row["rowid"],))
+        conn.execute(
+            """
+            INSERT INTO fts_summaries(rowid, file_path, summary, language)
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                row["rowid"],
+                obj["file_path"],
+                obj["summary"],
+                obj.get("language"),
+            ),
+        )
+    if commit:
+        conn.commit()
+
+
+def get_summary(conn: sqlite3.Connection, cache_key: str) -> dict[str, Any] | None:
+    row = conn.execute(
+        "SELECT * FROM summaries WHERE cache_key = ?",
+        (cache_key,),
+    ).fetchone()
+    return dict(row) if row else None
+
+
+def get_summary_by_path(conn: sqlite3.Connection, file_path: str) -> dict[str, Any] | None:
+    row = conn.execute(
+        """
+        SELECT * FROM summaries
+        WHERE file_path = ?
+        ORDER BY CASE WHEN summary_type = 'ai' THEN 0 ELSE 1 END, created_at DESC
+        LIMIT 1
+        """,
+        (file_path,),
+    ).fetchone()
+    return dict(row) if row else None
+
+
+def keyword_search(
+    conn: sqlite3.Connection,
+    query: str,
+    limit: int = 5,
+) -> list[dict[str, Any]]:
+    normalized_query = normalize_fts_query(query)
+    if not normalized_query:
+        return []
+    rows = conn.execute(
+        """
+        SELECT
+            s.file_path,
+            s.summary,
+            s.summary_type,
+            s.language,
+            bm25(fts_summaries) AS rank
+        FROM fts_summaries
+        JOIN summaries s ON s.rowid = fts_summaries.rowid
+        WHERE fts_summaries MATCH ?
+        ORDER BY CASE WHEN s.summary_type = 'ai' THEN 0 ELSE 1 END, rank ASC
+        LIMIT ?
+        """,
+        (normalized_query, limit),
+    ).fetchall()
+    return [
+        {
+            "file_path": row["file_path"],
+            "summary": row["summary"],
+            "summary_type": row["summary_type"],
+            "language": row["language"],
+        }
+        for row in rows
+    ]
+
+
+def rebuild_from_objects(conn: sqlite3.Connection, summaries_root: Path) -> None:
+    if not summaries_root.exists():
+        return
+    for path in summaries_root.glob("**/*.json"):
+        try:
+            obj = json.loads(path.read_text(encoding="utf-8"))
+            insert_summary(conn, obj, commit=False)
+        except Exception as exc:  # noqa: BLE001 - malformed cache files should not abort startup.
+            print(f"warning: failed to parse summary object {path}: {exc}", file=sys.stderr)
+    conn.commit()
+
+
+def optimize_fts(conn: sqlite3.Connection) -> None:
+    conn.execute("INSERT INTO fts_summaries(fts_summaries) VALUES('optimize')")
+    conn.execute("INSERT INTO fts_symbols(fts_symbols) VALUES('optimize')")
+    conn.commit()
+
+
+def count_by_type(conn: sqlite3.Connection) -> dict[str, int]:
+    rows = conn.execute(
+        "SELECT summary_type, COUNT(*) AS count FROM summaries GROUP BY summary_type"
+    ).fetchall()
+    counts = {"ai": 0, "static": 0, "total": 0}
+    for row in rows:
+        if row["summary_type"] in {"ai", "static"}:
+            counts[row["summary_type"]] = row["count"]
+        counts["total"] += row["count"]
+    return counts
+
+
+def insert_symbol(conn: sqlite3.Connection, obj: dict[str, Any], commit: bool = True) -> None:
+    symbols_json = json.dumps(obj.get("symbols", {}), sort_keys=True)
+    conn.execute(
+        """
+        INSERT INTO symbols (
+            cache_key,
+            file_path,
+            file_hash,
+            language,
+            symbols_json,
+            created_at,
+            schema_version
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(cache_key) DO UPDATE SET
+            file_path = excluded.file_path,
+            file_hash = excluded.file_hash,
+            language = excluded.language,
+            symbols_json = excluded.symbols_json,
+            created_at = excluded.created_at,
+            schema_version = excluded.schema_version
+        """,
+        (
+            obj["cache_key"],
+            obj["file_path"],
+            obj["file_hash"],
+            obj.get("language"),
+            symbols_json,
+            obj.get("created_at"),
+            obj.get("schema_version"),
+        ),
+    )
+    row = conn.execute(
+        "SELECT rowid FROM symbols WHERE cache_key = ?",
+        (obj["cache_key"],),
+    ).fetchone()
+    if row:
+        conn.execute("DELETE FROM fts_symbols WHERE rowid = ?", (row["rowid"],))
+        conn.execute(
+            """
+            INSERT INTO fts_symbols(rowid, file_path, symbol_names)
+            VALUES (?, ?, ?)
+            """,
+            (
+                row["rowid"],
+                obj["file_path"],
+                _symbol_names(obj.get("symbols", {})),
+            ),
+        )
+    if commit:
+        conn.commit()
+
+
+def get_symbol(conn: sqlite3.Connection, cache_key: str) -> dict[str, Any] | None:
+    row = conn.execute(
+        "SELECT * FROM symbols WHERE cache_key = ?",
+        (cache_key,),
+    ).fetchone()
+    return _symbol_row_to_dict(row) if row else None
+
+
+def get_symbol_by_path(conn: sqlite3.Connection, file_path: str) -> dict[str, Any] | None:
+    row = conn.execute(
+        """
+        SELECT * FROM symbols
+        WHERE file_path = ?
+        ORDER BY created_at DESC
+        LIMIT 1
+        """,
+        (file_path,),
+    ).fetchone()
+    return _symbol_row_to_dict(row) if row else None
+
+
+def find_symbol_by_name(
+    conn: sqlite3.Connection,
+    symbol_name: str,
+    limit: int = 10,
+) -> list[dict[str, Any]]:
+    normalized_query = normalize_fts_query(symbol_name)
+    if not normalized_query:
+        return []
+    rows = conn.execute(
+        """
+        SELECT
+            s.cache_key,
+            s.file_path,
+            s.language,
+            fts_symbols.symbol_names,
+            bm25(fts_symbols) AS rank
+        FROM fts_symbols
+        JOIN symbols s ON s.rowid = fts_symbols.rowid
+        WHERE fts_symbols MATCH ?
+        ORDER BY rank ASC
+        LIMIT ?
+        """,
+        (normalized_query, limit),
+    ).fetchall()
+    return [
+        {
+            "cache_key": row["cache_key"],
+            "file_path": row["file_path"],
+            "language": row["language"],
+            "symbol_names": row["symbol_names"],
+        }
+        for row in rows
+    ]
+
+
+def rebuild_symbols(conn: sqlite3.Connection, symbols_root: Path) -> int:
+    if not symbols_root.exists():
+        return 0
+    count = 0
+    for path in symbols_root.glob("**/*.json"):
+        try:
+            obj = json.loads(path.read_text(encoding="utf-8"))
+            insert_symbol(conn, obj, commit=False)
+            count += 1
+        except Exception as exc:  # noqa: BLE001 - malformed cache files should not abort sync.
+            print(f"warning: failed to parse symbol object {path}: {exc}", file=sys.stderr)
+    conn.commit()
+    return count
+
+
+def invalidate_by_path(conn: sqlite3.Connection, file_path: str) -> None:
+    summary_rows = conn.execute(
+        "SELECT rowid FROM summaries WHERE file_path = ?",
+        (file_path,),
+    ).fetchall()
+    symbol_rows = conn.execute(
+        "SELECT rowid FROM symbols WHERE file_path = ?",
+        (file_path,),
+    ).fetchall()
+    for row in summary_rows:
+        conn.execute("DELETE FROM fts_summaries WHERE rowid = ?", (row["rowid"],))
+    for row in symbol_rows:
+        conn.execute("DELETE FROM fts_symbols WHERE rowid = ?", (row["rowid"],))
+    conn.execute("DELETE FROM summaries WHERE file_path = ?", (file_path,))
+    conn.execute("DELETE FROM symbols WHERE file_path = ?", (file_path,))
+    conn.commit()
+
+
+def invalidate_stale(conn: sqlite3.Connection, days: int = 30) -> int:
+    cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
+    summary_rows = conn.execute(
+        "SELECT rowid, cache_key FROM summaries WHERE created_at < ?",
+        (cutoff,),
+    ).fetchall()
+    with conn:
+        for row in summary_rows:
+            conn.execute("DELETE FROM fts_summaries WHERE rowid = ?", (row["rowid"],))
+            symbol_row = conn.execute(
+                "SELECT rowid FROM symbols WHERE cache_key = ?",
+                (row["cache_key"],),
+            ).fetchone()
+            if symbol_row:
+                conn.execute("DELETE FROM fts_symbols WHERE rowid = ?", (symbol_row["rowid"],))
+                conn.execute("DELETE FROM symbols WHERE cache_key = ?", (row["cache_key"],))
+            conn.execute("DELETE FROM summaries WHERE rowid = ?", (row["rowid"],))
+
+        orphan_symbol_rows = conn.execute(
+            """
+            SELECT symbols.rowid
+            FROM symbols
+            LEFT JOIN summaries ON summaries.cache_key = symbols.cache_key
+            WHERE summaries.cache_key IS NULL
+            """
+        ).fetchall()
+        for row in orphan_symbol_rows:
+            conn.execute("DELETE FROM fts_symbols WHERE rowid = ?", (row["rowid"],))
+            conn.execute("DELETE FROM symbols WHERE rowid = ?", (row["rowid"],))
+    return len(summary_rows)
+
+
+def invalidate_all(conn: sqlite3.Connection) -> None:
+    conn.execute("DELETE FROM fts_summaries")
+    conn.execute("DELETE FROM fts_symbols")
+    conn.execute("DELETE FROM summaries")
+    conn.execute("DELETE FROM symbols")
+    conn.commit()
+
+
+def summary_count(conn: sqlite3.Connection) -> int:
+    return conn.execute("SELECT COUNT(*) FROM summaries").fetchone()[0]
+
+
+def symbol_count(conn: sqlite3.Connection) -> int:
+    return conn.execute("SELECT COUNT(*) FROM symbols").fetchone()[0]
+
+
+def coverage_stats(conn: sqlite3.Connection) -> dict[str, int]:
+    rows = conn.execute(
+        """
+        SELECT file_path,
+               MAX(CASE WHEN summary_type = 'ai' THEN 1 ELSE 0 END) AS has_ai
+        FROM summaries
+        GROUP BY file_path
+        """
+    ).fetchall()
+    ai = sum(1 for r in rows if r["has_ai"])
+    return {"ai": ai, "static": len(rows) - ai, "indexed": len(rows)}
+
+
+def top_contributors(conn: sqlite3.Connection, limit: int = 5) -> list[dict[str, Any]]:
+    rows = conn.execute(
+        """
+        SELECT created_by, COUNT(*) AS count
+        FROM summaries
+        WHERE summary_type = 'ai'
+          AND created_by IS NOT NULL
+          AND created_by != ''
+        GROUP BY created_by
+        ORDER BY count DESC
+        LIMIT ?
+        """,
+        (limit,),
+    ).fetchall()
+    return [{"email": row["created_by"], "count": row["count"]} for row in rows]
+
+
+def static_only_files(conn: sqlite3.Connection, limit: int = 5) -> list[str]:
+    rows = conn.execute(
+        """
+        SELECT DISTINCT s.file_path
+        FROM summaries s
+        WHERE s.summary_type = 'static'
+          AND NOT EXISTS (
+              SELECT 1 FROM summaries s2
+              WHERE s2.file_path = s.file_path AND s2.summary_type = 'ai'
+          )
+        LIMIT ?
+        """,
+        (limit,),
+    ).fetchall()
+    return [row["file_path"] for row in rows]
+
+
+def _symbol_row_to_dict(row: sqlite3.Row) -> dict[str, Any]:
+    result = dict(row)
+    result["symbols"] = json.loads(result.pop("symbols_json") or "{}")
+    return result
+
+
+def _symbol_names(symbols: dict[str, Any]) -> str:
+    names: list[str] = []
+    for value in symbols.values():
+        if isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict):
+                    name = item.get("name")
+                    if name:
+                        names.append(str(name))
+                    methods = item.get("methods")
+                    if isinstance(methods, list):
+                        for method in methods:
+                            if isinstance(method, dict):
+                                method_name = method.get("name")
+                                if method_name:
+                                    names.append(str(method_name))
+                            elif method:
+                                names.append(str(method))
+                elif item:
+                    names.append(str(item))
+    return " ".join(names)
