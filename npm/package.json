@@ -1,6 +1,6 @@
 {
   "name": "teamcache",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Shared AI context cache for software teams — eliminate the cold start",
   "keywords": ["ai", "mcp", "claude", "context", "cache", "developer-tools"],
   "homepage": "https://github.com/teamcache/teamcache",
