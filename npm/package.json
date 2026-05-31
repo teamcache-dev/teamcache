@@ -1,13 +1,13 @@
 {
   "name": "teamcache",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "Shared AI context cache for software teams — eliminate the cold start",
   "keywords": ["ai", "mcp", "claude", "context", "cache", "developer-tools"],
-  "homepage": "https://github.com/teamcache/teamcache",
-  "bugs": "https://github.com/teamcache/teamcache/issues",
+  "homepage": "https://github.com/teamcache-dev/teamcache",
+  "bugs": "https://github.com/teamcache-dev/teamcache/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/teamcache/teamcache.git"
+    "url": "https://github.com/teamcache-dev/teamcache.git"
   },
   "license": "MIT",
   "bin": {

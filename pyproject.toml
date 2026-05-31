@@ -56,10 +56,10 @@ dev = [
 teamcache = "teamcache.__main__:main"
 
 [project.urls]
-Homepage = "https://github.com/teamcache/teamcache"
-Documentation = "https://github.com/teamcache/teamcache#readme"
-Repository = "https://github.com/teamcache/teamcache"
-Issues = "https://github.com/teamcache/teamcache/issues"
+Homepage = "https://github.com/teamcache-dev/teamcache"
+Documentation = "https://github.com/teamcache-dev/teamcache#readme"
+Repository = "https://github.com/teamcache-dev/teamcache"
+Issues = "https://github.com/teamcache-dev/teamcache/issues"
 
 [tool.hatch.version]
 path = "teamcache/__init__.py"
