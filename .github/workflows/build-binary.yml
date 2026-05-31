@@ -15,9 +15,6 @@ jobs:
           - os: ubuntu-latest
             target: linux-x64
             artifact: teamcache-linux-x64
-          - os: macos-13
-            target: macos-x64
-            artifact: teamcache-macos-x64
           - os: macos-latest
             target: macos-arm64
             artifact: teamcache-macos-arm64
