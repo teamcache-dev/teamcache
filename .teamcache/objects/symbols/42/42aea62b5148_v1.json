@@ -1,0 +1,55 @@
+{
+  "cache_key": "42aea62b5148ae92cbf6bcf5aa009854a63f4d2f1f7362450f0edcac998e9d74",
+  "file_path": "tests/test_cli_hooks.py",
+  "file_hash": "c820ec0f63f84eca17685c8c120c6add28b5a8abba98f48f74017fd32d4207e1",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "repo",
+        "line": null,
+        "signature": "repo"
+      },
+      {
+        "name": "add_ai_summary",
+        "line": null,
+        "signature": "add_ai_summary"
+      },
+      {
+        "name": "test_check_cached",
+        "line": null,
+        "signature": "test_check_cached"
+      },
+      {
+        "name": "test_session_uncached",
+        "line": null,
+        "signature": "test_session_uncached"
+      },
+      {
+        "name": "test_pr_check",
+        "line": null,
+        "signature": "test_pr_check"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "subprocess",
+      "os",
+      "json",
+      "datetime",
+      "pytest",
+      "pathlib",
+      "click.testing",
+      "teamcache.cli",
+      "teamcache.config",
+      "teamcache.store",
+      "teamcache.db",
+      "teamcache.constants",
+      "teamcache.files"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-06-04T14:26:59.725036Z",
+  "created_by": "unknown"
+}

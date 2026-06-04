@@ -1,0 +1,12 @@
+{
+  "cache_key": "0a3422212da0a62c222ddc9190cbdfe65438aa546360ab379b3a86744a5b89c1",
+  "file_path": "teamcache/mcp_server.py",
+  "file_hash": "213e3acb51ad48a37f00d730f8b6d5cf8b852d728c5e319eb8ed9659ae264f42",
+  "summary": "imports: asyncio, json, os, subprocess, time, __future__, datetime, pathlib, typing, mcp.server.fastmcp, .config, .constants, .db, .embeddings, .files, .store, .secrets | functions: run_server, _summary_confidence, _repo_overview, _repo_overview_from_scan, _read_repomap, _repomap_total_files, _top_module_lines, _tree_from_repomap, _repomap_paths, _append_tree_lines, _repo_scan, _language_counts_from_walk, _semantic_results, _merge_relevance_results, _symbol_line, _sanitize_path",
+  "summary_type": "static",
+  "schema_version": "v1",
+  "created_at": "2026-06-04T14:26:59.721614Z",
+  "created_by": "unknown",
+  "file_size_bytes": 40153,
+  "language": "python"
+}
