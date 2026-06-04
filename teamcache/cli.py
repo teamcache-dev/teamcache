@@ -727,7 +727,7 @@ def _pick_summary_winner(
     return a
 
 
-_SUPPORTED_AGENTS = ("claude", "codex", "cursor", "opencode", "aider", "windsurf", "copilot", "roo", "cline")
+_SUPPORTED_AGENTS = ("claude", "codex", "cursor", "opencode", "aider", "windsurf", "copilot", "roo", "cline", "gemini")
 
 
 @cli.command()
@@ -1031,6 +1031,10 @@ def _agent_install(
         )
         console.print("Cline: .cline/mcp.json written, .clinerules updated.")
 
+    elif agent == "gemini":
+        _install_gemini_extension(teamcache_bin, dry_run=dry_run, print_diff=print_diff)
+        console.print("Gemini CLI: extension installed in ~/.gemini/extensions/teamcache/.")
+
 
 def _agent_uninstall(
     agent: str,
@@ -1097,6 +1101,10 @@ def _agent_uninstall(
         _remove_instructions_block(repo_root / ".clinerules", dry_run=dry_run, print_diff=print_diff)
         console.print("Cline: config removed.")
 
+    elif agent == "gemini":
+        _uninstall_gemini_extension(dry_run=dry_run, print_diff=print_diff)
+        console.print("Gemini CLI: extension removed from ~/.gemini/extensions/teamcache/.")
+
 
 _TEAMCACHE_START = "<!-- TEAMCACHE:START -->"
 _TEAMCACHE_END = "<!-- TEAMCACHE:END -->"
@@ -1133,6 +1141,75 @@ Before reading any file: call get_file_context(file_path).
 After reading any file (when not ai-cached): call cache_summary(file_path, summary, language).
 Before any task: call find_relevant_files(task_description).
 """
+
+
+_GEMINI_CONTEXT_BLOCK = """\
+# TeamCache
+At session start: call repo_overview() for a map of the repo.
+Before reading any file: call get_file_context(file_path).
+  - summary_type "ai"     -> use summary, skip reading (unless editing)
+  - summary_type "static" -> use for navigation, still read the file,
+                             then call cache_summary() with your understanding
+  - cached false          -> read file normally, then call cache_summary()
+After reading any file (when not ai-cached): call
+  cache_summary(file_path, your_understanding, language)
+Before any task: call find_relevant_files(task_description).
+"""
+
+
+def _gemini_extension_dir() -> Path:
+    return Path.home() / ".gemini" / "extensions" / "teamcache"
+
+
+def _install_gemini_extension(
+    teamcache_bin: Path,
+    *,
+    dry_run: bool = False,
+    print_diff: bool = False,
+) -> None:
+    from teamcache import __version__
+
+    ext_dir = _gemini_extension_dir()
+    manifest = {
+        "name": "teamcache",
+        "version": __version__,
+        "contextFileName": "GEMINI.md",
+        "mcpServers": {
+            "teamcache": {
+                "command": str(teamcache_bin),
+                "args": ["serve"],
+                "cwd": "${extensionPath}",
+            }
+        },
+    }
+    manifest_path = ext_dir / "gemini-extension.json"
+    context_path = ext_dir / "GEMINI.md"
+
+    if not dry_run:
+        ext_dir.mkdir(parents=True, exist_ok=True)
+
+    _write_text_change(
+        manifest_path,
+        json.dumps(manifest, indent=2) + "\n",
+        dry_run=dry_run,
+        print_diff=print_diff,
+    )
+    _write_text_change(
+        context_path,
+        _GEMINI_CONTEXT_BLOCK,
+        dry_run=dry_run,
+        print_diff=print_diff,
+    )
+
+
+def _uninstall_gemini_extension(
+    *,
+    dry_run: bool = False,
+    print_diff: bool = False,
+) -> None:
+    ext_dir = _gemini_extension_dir()
+    for filename in ("gemini-extension.json", "GEMINI.md"):
+        _delete_file_change(ext_dir / filename, dry_run=dry_run, print_diff=print_diff)
 
 
 def _write_mcp_json(

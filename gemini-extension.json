@@ -1,0 +1,11 @@
+{
+  "name": "teamcache",
+  "version": "0.3.0",
+  "contextFileName": "GEMINI.md",
+  "mcpServers": {
+    "teamcache": {
+      "command": "python",
+      "args": ["-m", "teamcache", "serve"]
+    }
+  }
+}

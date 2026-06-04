@@ -270,3 +270,51 @@ def test_backup_file_is_created_before_uninstall_mutation(repo):
 
     assert result.exit_code == 0, result.output
     assert (repo / "AGENTS.md.teamcache.bak").read_text(encoding="utf-8") == installed
+
+
+def test_install_gemini_writes_extension_files(repo, monkeypatch, tmp_path):
+    fake_home = tmp_path / "home"
+    fake_home.mkdir()
+    monkeypatch.setattr(cli_module, "_gemini_extension_dir", lambda: fake_home / ".gemini" / "extensions" / "teamcache")
+
+    result = invoke(["install", "--agent", "gemini"])
+
+    assert result.exit_code == 0, result.output
+    ext_dir = fake_home / ".gemini" / "extensions" / "teamcache"
+    manifest = json.loads((ext_dir / "gemini-extension.json").read_text(encoding="utf-8"))
+    assert manifest["name"] == "teamcache"
+    assert "teamcache" in manifest["mcpServers"]
+    assert manifest["mcpServers"]["teamcache"]["args"] == ["serve"]
+    assert manifest["contextFileName"] == "GEMINI.md"
+    context = (ext_dir / "GEMINI.md").read_text(encoding="utf-8")
+    assert "repo_overview" in context
+    assert "cache_summary" in context
+
+
+def test_uninstall_gemini_removes_extension_files(repo, monkeypatch, tmp_path):
+    fake_home = tmp_path / "home"
+    fake_home.mkdir()
+    monkeypatch.setattr(cli_module, "_gemini_extension_dir", lambda: fake_home / ".gemini" / "extensions" / "teamcache")
+
+    assert invoke(["install", "--agent", "gemini"]).exit_code == 0
+    ext_dir = fake_home / ".gemini" / "extensions" / "teamcache"
+    assert (ext_dir / "gemini-extension.json").exists()
+    assert (ext_dir / "GEMINI.md").exists()
+
+    result = invoke(["uninstall", "--agent", "gemini"])
+
+    assert result.exit_code == 0, result.output
+    assert not (ext_dir / "gemini-extension.json").exists()
+    assert not (ext_dir / "GEMINI.md").exists()
+
+
+def test_install_gemini_is_idempotent(repo, monkeypatch, tmp_path):
+    fake_home = tmp_path / "home"
+    fake_home.mkdir()
+    monkeypatch.setattr(cli_module, "_gemini_extension_dir", lambda: fake_home / ".gemini" / "extensions" / "teamcache")
+
+    assert invoke(["install", "--agent", "gemini"]).exit_code == 0
+    first = (fake_home / ".gemini" / "extensions" / "teamcache" / "gemini-extension.json").read_text(encoding="utf-8")
+    assert invoke(["install", "--agent", "gemini"]).exit_code == 0
+    second = (fake_home / ".gemini" / "extensions" / "teamcache" / "gemini-extension.json").read_text(encoding="utf-8")
+    assert first == second
