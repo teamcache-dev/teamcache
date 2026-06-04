@@ -7,8 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-04
+
 ### New Features
 
+- **Copilot, Roo Code, and Cline agent support** — `teamcache install --agent copilot|roo|cline` and the corresponding uninstall. Copilot gets an instruction block in `.github/copilot-instructions.md`; Roo Code writes `.roo/mcp.json` + `.roomodes`; Cline writes `.cline/mcp.json` + `.clinerules`. All are idempotent upserts backed by `.teamcache.bak` copies.
+- **`teamcache check-cached <file>`** — exits 0 if the file has an AI summary, exits 1 with a prompt otherwise. Useful as a pre-tool hook in agent configs.
+- **`teamcache session-uncached [--prompt]`** — lists files read via `get_file_context` this session that still lack an AI summary. `--prompt` formats output as an AI suggestion.
+- **`teamcache pr-check [--since main]`** — lists changed files (vs. base branch) missing AI summaries and exits 1 if any are found; used by the GitHub Actions PR workflow.
+- **Session read tracking** — `get_file_context` now records every file path it serves into `.teamcache/local/session_reads.json` for use by `session-uncached`.
+- **Staleness in `get_file_context`** — the tool is now `async`; it fetches `git log` mtime and compares against `created_at` to set `stale: true` and downgrade `summary_confidence` to `"low"` when the file has changed since the summary was written.
 - **C / C++ tree-sitter support** — `.c`, `.h`, `.cpp`, `.cc`, `.hpp` files are now fully parsed with `tree-sitter-cpp`. Extracts functions (with line spans, signatures, and outgoing calls), classes/structs/unions (with method lists), and `#include` / `using` imports. `tree-sitter-cpp>=0.21.0` added to `[symbols]` optional dependency group.
 - **`get_file_symbols(path)` MCP tool** — returns all functions and classes with exact `line` / `end_line` numbers and signatures, without returning source code. Intended as a lightweight navigation step before `get_symbol_source()`.
 - **`get_symbol_source(path, symbol_name)` MCP tool** — returns only the source lines for a single named function or method, using the stored line span. Avoids loading the entire file.
@@ -17,17 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improvements
 
-- **`SYMBOL_SCHEMA_VERSION = "vs1"`** added to `constants.py`. Symbol objects now use an independently versioned cache key (`cache_key(fhash, SYMBOL_SCHEMA_VERSION)`), separate from summary objects (`SCHEMA_VERSION = "v2"`). Upgrading symbol schema no longer invalidates existing AI summaries.
-- **Symbol objects upgraded** (`symbols.py`):
-  - All function dicts now include `end_line` (end of function body) and `calls` (list of callee names extracted from the AST).
-  - All class method dicts now include `end_line`.
-  - `outgoing_calls` (deduplicated union of all `calls` across functions and methods in a file) is stored at the **top level** of the symbol object — not inside `symbols` — so the FTS index remains clean.
-- **`_write_repomap` 3-pass fix** — repomap generation is now explicitly ordered:
-  1. Pass 1 builds `definition_locations` for all symbols and module aliases.
-  2. Pass 2a builds `reverse_imports` (uses the complete Pass 1 map, fixing the previous ordering bug where some imports weren't resolved).
-  3. Pass 2b builds `call_graph` from `outgoing_calls`.
-  4. Pass 3 builds `top_symbols`.
-- **`_index_file` split cache keys** — `_index_file` in `cli.py` now uses `summary_key` (schema `v2`) and `symbol_key` (schema `vs1`) as separate identifiers for the two object types.
+- **`SYMBOL_SCHEMA_VERSION = "vs1"`** — symbol objects use an independently versioned cache key, separate from summary objects (`SCHEMA_VERSION = "v2"`). Upgrading symbol schema no longer invalidates existing AI summaries.
+- **Symbol objects upgraded** (`symbols.py`): all function dicts now include `end_line` and `calls` (callee names from AST); all class method dicts now include `end_line`; `outgoing_calls` stored at the top level of the symbol object.
+- **`_write_repomap` 3-pass fix** — pass 1 builds `definition_locations`, pass 2a builds `reverse_imports` (fixing an ordering bug), pass 2b builds `call_graph`, pass 3 builds `top_symbols`.
+- **`_index_file` split cache keys** — uses `summary_key` (schema `v2`) and `symbol_key` (schema `vs1`) as separate identifiers.
+- **`get_file_context` returns role summaries** — additional `<role>_summary` fields from disk objects (e.g. `security_summary`) are merged into the response.
 
 ### Migration from v0.2.1
 
