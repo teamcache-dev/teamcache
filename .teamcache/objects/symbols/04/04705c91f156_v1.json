@@ -1,0 +1,15 @@
+{
+  "cache_key": "04705c91f156a43319d08c24703063ef462361524b92f1733d0aee68419a0128",
+  "file_path": ".claude/settings.local.json",
+  "file_hash": "29928ae954bc1a879d991f59937185f31e757ce623f6e97ed8a68424490f26a2",
+  "schema_version": "v1",
+  "language": "json",
+  "symbols": {
+    "functions": [],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "created_at": "2026-06-04T14:41:46.561399Z",
+  "created_by": "unknown"
+}
