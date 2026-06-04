@@ -50,11 +50,24 @@ def embeddings_count(conn: sqlite3.Connection) -> int:
 
 def should_use_embeddings(emb_conn: sqlite3.Connection, config: Any) -> bool:
     """Return True when embeddings are enabled and below the row-count guard."""
+    import sys
     if not getattr(config, "enable_embeddings", False):
+        print("teamcache: semantic search disabled (enable_embeddings: false in config)", file=sys.stderr)
         return False
     count = embeddings_count(emb_conn)
     limit = getattr(config, "max_files_for_local_embeddings", 5000)
-    return count <= limit
+    if count > limit:
+        print(f"teamcache: semantic search disabled ({count} embeddings exceeds limit {limit})", file=sys.stderr)
+        return False
+    return True
+
+
+def embeddings_available_locally() -> bool:
+    cache = Path.home() / ".cache" / "huggingface" / "hub"
+    return cache.is_dir() and any(
+        d.name.startswith("models--sentence-transformers--all-MiniLM-L6-v2")
+        for d in cache.iterdir()
+    )
 
 
 def get_model(config: Any = None) -> Any | None:
