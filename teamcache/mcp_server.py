@@ -49,6 +49,7 @@ MIN_SUMMARY_WORDS = 5
 
 _WRITTEN_THIS_SESSION: set[str] = set()
 _OVERVIEW_CACHE: dict[str, Any] = {}
+_GIT_MTIME_CACHE: dict[str, str | None] = {}
 
 
 def run_server() -> None:
@@ -266,9 +267,33 @@ def run_server() -> None:
             mtimes = await asyncio.gather(
                 *[_git_mtime(repo_root, r["file_path"]) for r in results]
             )
+            now = datetime.now(tz=timezone.utc)
             for result, mtime in zip(results, mtimes):
-                result["last_modified"] = mtime
-            results.sort(key=lambda r: r.get("quality_score") or 0.0, reverse=True)
+                result["file_last_modified"] = mtime
+                # Fetch created_at from DB — not included in search result dicts
+                summary_obj = get_summary_by_path(read_conn, result["file_path"])
+                created_at_str = summary_obj.get("created_at") if summary_obj else None
+                summary_age_days: int | None = None
+                if created_at_str:
+                    try:
+                        created = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+                        summary_age_days = (now - created).days
+                    except (ValueError, TypeError):
+                        pass
+                result["summary_age_days"] = summary_age_days
+                stale = False
+                if mtime and created_at_str:
+                    try:
+                        git_ts = datetime.fromisoformat(mtime.replace(" ", "T", 1))
+                        if git_ts.tzinfo is None:
+                            git_ts = git_ts.replace(tzinfo=timezone.utc)
+                        created = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+                        stale = git_ts > created
+                    except (ValueError, TypeError):
+                        pass
+                result["stale"] = stale
+            # stale=False first (fresh summaries), then by quality_score DESC
+            results.sort(key=lambda r: (r.get("stale") or False, -(r.get("quality_score") or 0.0)))
             used_semantic = len(semantic) > 0
             search_mode = "semantic+keyword" if used_semantic else "keyword_only"
             return [{"search_mode": search_mode, **r} for r in results]
@@ -410,7 +435,12 @@ def run_server() -> None:
 
 
 async def _git_mtime(repo_root: Path, file_path: str) -> str | None:
-    """Return the ISO timestamp of the most recent git commit touching file_path, or None."""
+    """Return the ISO timestamp of the most recent git commit touching file_path, or None.
+
+    Results are cached in _GIT_MTIME_CACHE for the server's lifetime.
+    """
+    if file_path in _GIT_MTIME_CACHE:
+        return _GIT_MTIME_CACHE[file_path]
     try:
         proc = await asyncio.create_subprocess_exec(
             "git", "log", "--format=%ci", "-1", "--", file_path,
@@ -419,9 +449,11 @@ async def _git_mtime(repo_root: Path, file_path: str) -> str | None:
             cwd=repo_root,
         )
         stdout, _ = await proc.communicate()
-        return stdout.decode().strip() or None
+        result = stdout.decode().strip() or None
     except OSError:
-        return None
+        result = None
+    _GIT_MTIME_CACHE[file_path] = result
+    return result
 
 
 def _summary_confidence(created_at: str | None) -> str:
