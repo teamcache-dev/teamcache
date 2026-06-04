@@ -1,0 +1,12 @@
+{
+  "cache_key": "fc089f2f879cf4dfd176b49bf271ca884eed720ddacdcbbc9e3e855c215d770d",
+  "file_path": "teamcache/cli.py",
+  "file_hash": "f788b5da575f639b9db267a33813e2149f7a32cd6f59b26177d5a2a2ca17ec41",
+  "summary": "imports: os, shutil, subprocess, sys, json, difflib, click, __future__, collections, datetime, pathlib, rich.console, rich.markup, rich.progress, .config, .constants, .db, .embeddings, .files, .store, .symbols | functions: cli, init, migrate_hooks, index, changed, sync, invalidate, stats, metrics, report, commit, serve, migrate, merge_driver, doctor, _pick_summary_winner, install, uninstall, _resolve_teamcache_bin, _agent_install, _agent_uninstall, _write_mcp_json, _remove_mcp_json, _append_instructions_block, _remove_instructions_block, _teamcache_block_spans, _upsert_teamcache_block, _remove_teamcache_blocks, _write_text_change, _print_text_diff, _create_teamcache_backup, _delete_file_change, _write_aider_config, _remove_aider_config, _index_file, _summary_object_for_path, _symbol_object_for_path, _write_repomap, _module_aliases, _import_lookup_keys, _detect_hook_conflicts, _install_post_merge_hook, _first_warning_line, _ensure_gitignore_entry, _append_claude_instructions, _atomic_write_text",
+  "summary_type": "static",
+  "schema_version": "v1",
+  "created_at": "2026-06-04T13:59:23.568087Z",
+  "created_by": "unknown",
+  "file_size_bytes": 54984,
+  "language": "python"
+}

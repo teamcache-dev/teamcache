@@ -1,13 +1,13 @@
 {
   "schema_version": "v1",
-  "generated_at": "2026-06-04T11:56:21.030292Z",
-  "total_files": 2899,
+  "generated_at": "2026-06-04T13:59:23.797239Z",
+  "total_files": 5920,
   "languages": {
     "javascript": 1,
-    "json": 2800,
-    "markdown": 10,
-    "python": 65,
-    "toml": 4,
+    "json": 5809,
+    "markdown": 12,
+    "python": 74,
+    "toml": 5,
     "unknown": 7,
     "yaml": 12
   },
@@ -44,13 +44,8 @@
       "language": "python"
     },
     {
-      "name": ".search",
-      "file_path": "teamcache/search.py",
-      "language": "python"
-    },
-    {
-      "name": "teamcache.cli",
-      "file_path": "teamcache/cli.py",
+      "name": ".store",
+      "file_path": "teamcache/store.py",
       "language": "python"
     },
     {
@@ -59,8 +54,23 @@
       "language": "python"
     },
     {
-      "name": ".store",
-      "file_path": "teamcache/store.py",
+      "name": "teamcache.cli",
+      "file_path": "teamcache/cli.py",
+      "language": "python"
+    },
+    {
+      "name": ".search",
+      "file_path": "teamcache/search.py",
+      "language": "python"
+    },
+    {
+      "name": "teamcache.config",
+      "file_path": "teamcache/config.py",
+      "language": "python"
+    },
+    {
+      "name": "teamcache.symbols",
+      "file_path": "teamcache/symbols.py",
       "language": "python"
     },
     {
@@ -89,8 +99,8 @@
       "language": "python"
     },
     {
-      "name": "teamcache.config",
-      "file_path": "teamcache/config.py",
+      "name": "teamcache.store",
+      "file_path": "teamcache/store.py",
       "language": "python"
     },
     {
@@ -112,16 +122,69 @@
       "name": "cli",
       "file_path": "teamcache/cli.py",
       "language": "python"
-    },
-    {
-      "name": "teamcache.store",
-      "file_path": "teamcache/store.py",
-      "language": "python"
-    },
-    {
-      "name": "teamcache.symbols",
-      "file_path": "teamcache/symbols.py",
-      "language": "python"
     }
-  ]
+  ],
+  "reverse_imports": {
+    ".teamcache/config.yaml": [
+      "teamcache/cli.py",
+      "teamcache/mcp_server.py"
+    ],
+    "teamcache/constants.py": [
+      "teamcache/cli.py",
+      "teamcache/mcp_server.py",
+      "teamcache/store.py",
+      "teamcache/config.py",
+      "teamcache/files.py",
+      "tests/test_store.py"
+    ],
+    "teamcache/db.py": [
+      "teamcache/cli.py",
+      "teamcache/mcp_server.py",
+      "tests/test_db.py",
+      "tests/test_db_migration.py"
+    ],
+    "teamcache/embeddings.py": [
+      "teamcache/cli.py",
+      "teamcache/mcp_server.py"
+    ],
+    "teamcache/files.py": [
+      "teamcache/cli.py",
+      "teamcache/mcp_server.py",
+      "teamcache/symbols.py",
+      "tests/test_files.py",
+      "tests/test_file_indexing.py"
+    ],
+    "teamcache/symbols.py": [
+      "teamcache/cli.py",
+      "tests/test_symbols.py",
+      "tests/test_symbols_cpp.py"
+    ],
+    "teamcache/store.py": [
+      "teamcache/mcp_server.py",
+      "tests/test_store.py",
+      "teamcache/cli.py"
+    ],
+    "teamcache/secrets.py": [
+      "teamcache/mcp_server.py",
+      "tests/test_secrets.py"
+    ],
+    "teamcache/cli.py": [
+      "teamcache/__main__.py",
+      "tests/test_repomap.py",
+      "tests/test_cli_install.py",
+      "tests/test_cli_init.py"
+    ],
+    "teamcache/config.py": [
+      "tests/test_store.py",
+      "tests/test_config.py",
+      "teamcache/cli.py",
+      "teamcache/mcp_server.py"
+    ],
+    "teamcache/search.py": [
+      "teamcache/db.py"
+    ],
+    "tests/conftest.py": [
+      "tests/test_hooks.py"
+    ]
+  }
 }

@@ -1,0 +1,12 @@
+{
+  "cache_key": "b70bb95a98e485deda2a0a28dee1b0ccbf677a03e3c906556b35b63b972b0e9d",
+  "file_path": "teamcache/store.py",
+  "file_hash": "f74d6ba21e976ce1b8f882a5e6bec69c9f93d28ac8bcfdae6f8176af2533d78e",
+  "summary": "imports: json, os, __future__, pathlib, typing, .constants | classes: ObjectStore, GitObjectStore | functions: make_store",
+  "summary_type": "static",
+  "schema_version": "v1",
+  "created_at": "2026-06-04T13:59:23.574085Z",
+  "created_by": "unknown",
+  "file_size_bytes": 3885,
+  "language": "python"
+}
