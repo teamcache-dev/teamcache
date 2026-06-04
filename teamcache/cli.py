@@ -31,6 +31,7 @@ from .db import (
     connect,
     coverage_stats,
     get_summary,
+    get_summary_by_path,
     get_symbol,
     insert_summary,
     insert_symbol,
@@ -766,6 +767,127 @@ def uninstall(agent: str, dry_run: bool, print_diff: bool) -> None:
         raise click.ClickException(str(exc)) from exc
 
     _agent_uninstall(agent, repo_root, dry_run=dry_run, print_diff=print_diff)
+
+
+@cli.command("check-cached")
+@click.argument("file_path")
+def check_cached(file_path: str) -> None:
+    try:
+        root = find_repo_root(Path.cwd())
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    conn = connect(root / INDEX_DB)
+    try:
+        try:
+            rel = Path(file_path).resolve().relative_to(root.resolve()).as_posix()
+        except ValueError:
+            sys.exit(0)
+
+        obj = get_summary_by_path(conn, rel)
+        if obj and obj.get("summary_type") == "ai":
+            sys.exit(0)
+        else:
+            console.print(f"No AI summary for {file_path}. Please read the file and call cache_summary().")
+            sys.exit(1)
+    finally:
+        conn.close()
+
+
+@cli.command("session-uncached")
+@click.option("--prompt", is_flag=True, help="Format output as a suggestion for AI.")
+def session_uncached(prompt: bool) -> None:
+    try:
+        root = find_repo_root(Path.cwd())
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    reads_file = root / LOCAL_DIR / "session_reads.json"
+    if not reads_file.exists():
+        return
+
+    try:
+        reads = json.loads(reads_file.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+
+    conn = connect(root / INDEX_DB)
+    try:
+        uncached = []
+        for rel in reads:
+            obj = get_summary_by_path(conn, rel)
+            if not obj or obj.get("summary_type") != "ai":
+                uncached.append(rel)
+    finally:
+        conn.close()
+
+    if not uncached:
+        return
+
+    if prompt:
+        console.print("Please review and cache summaries for the following files you read this session:")
+        for u in uncached:
+            console.print(f"- {u}")
+    else:
+        for u in uncached:
+            console.print(u)
+
+
+@cli.command("pr-check")
+@click.option("--since", default="main", show_default=True, help="Base branch to compare against.")
+def pr_check(since: str) -> None:
+    try:
+        root = find_repo_root(Path.cwd())
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--name-only", f"{since}...HEAD"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError as exc:
+        console.print(f"[red]error:[/red] git diff failed: {escape(str(exc))}")
+        raise SystemExit(1)
+
+    if result.returncode != 0:
+        detail = _first_warning_line(result.stderr.strip() or result.stdout.strip())
+        console.print(f"[red]error:[/red] git diff failed: {escape(detail)}")
+        raise SystemExit(1)
+
+    rels = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    if not rels:
+        console.print("No changed files.")
+        return
+
+    conn = connect(root / INDEX_DB)
+    missing = []
+    try:
+        for rel in rels:
+            path = (root / rel).resolve()
+            if not path.exists() or not path.is_file():
+                continue
+            try:
+                path.relative_to(root.resolve())
+            except ValueError:
+                continue
+                
+            obj = get_summary_by_path(conn, rel)
+            if not obj or obj.get("summary_type") != "ai":
+                missing.append(rel)
+    finally:
+        conn.close()
+
+    if not missing:
+        console.print("All changed files have AI summaries.")
+    else:
+        console.print("The following changed files are missing AI summaries:\n")
+        for m in missing:
+            console.print(f"- [ ] `{m}`")
+        sys.exit(1)
 
 
 def _resolve_teamcache_bin() -> Path:

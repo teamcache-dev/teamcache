@@ -18,6 +18,7 @@ from .constants import (
     ENTRY_POINTS,
     INDEX_DB,
     LANGUAGE_BY_SUFFIX,
+    LOCAL_DIR,
     SKIP_DIRS,
     SKIP_SUFFIXES,
     SUMMARIES_DIR,
@@ -85,25 +86,57 @@ def run_server() -> None:
             return {"error": str(exc)}
 
     @mcp.tool()
-    def get_file_context(file_path: str) -> dict[str, Any]:
+    async def get_file_context(file_path: str) -> dict[str, Any]:
         try:
             rel, path = _sanitize_path(repo_root, repo_resolved, file_path)
             if rel is None or path is None:
                 return {"error": "path outside repository"}
 
+            def _track_read(rel_path: str) -> None:
+                if rel_path:
+                    _READ_THIS_SESSION.add(rel_path)
+                    reads_file = repo_root / LOCAL_DIR / "session_reads.json"
+                    reads_file.parent.mkdir(parents=True, exist_ok=True)
+                    try:
+                        reads_file.write_text(json.dumps(list(_READ_THIS_SESSION)), encoding="utf-8")
+                    except OSError:
+                        pass
+
             language = LANGUAGE_BY_SUFFIX.get(path.suffix.lower(), "unknown")
             obj = None
+            disk_obj = {}
             if path.is_file():
                 try:
                     content = path.read_bytes()
                     fhash = file_hash(content)
                     key = cache_key(fhash, config.schema_version)
                     obj = get_summary(read_conn, key)
+                    if obj:
+                        disk_obj = store.read(key) or {}
                 except OSError:
                     pass
 
+            stale = False
+            confidence = "unknown"
+            if obj and path.is_file():
+                mtime = await _git_mtime(repo_root, rel)
+                created_at_str = obj.get("created_at")
+                if mtime and created_at_str:
+                    try:
+                        git_ts = datetime.fromisoformat(mtime.replace(" ", "T", 1))
+                        if git_ts.tzinfo is None:
+                            git_ts = git_ts.replace(tzinfo=timezone.utc)
+                        created = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+                        stale = git_ts > created
+                    except (ValueError, TypeError):
+                        pass
+                confidence = _summary_confidence(created_at_str)
+                if stale:
+                    confidence = "low"
+
             # P1-E: detect moved files — cached path differs from current path
             if obj and obj.get("file_path") != rel:
+                _track_read(rel)
                 return {
                     "summary": obj["summary"],
                     "summary_type": obj.get("summary_type", "ai"),
@@ -111,12 +144,14 @@ def run_server() -> None:
                     "file_path": file_path,
                     "language": language,
                     "path_mismatch": True,
+                    "stale": stale,
                     "note": (
                         f"Summary found but was indexed under a different path ({obj['file_path']}). "
                         "File may have been moved. Read the file and call cache_summary() to re-index."
                     ),
-                    "summary_confidence": "low",
+                    "summary_confidence": confidence,
                     "quality_score": obj.get("quality_score") or compute_quality_score(obj["summary"], obj.get("file_size_bytes") or 0),
+                    **{k: v for k, v in disk_obj.items() if k.endswith("_summary") and k != "summary"}
                 }
 
             if obj and obj["summary_type"] == "ai":
@@ -125,27 +160,37 @@ def run_server() -> None:
                     "IMPORTANT: You MUST read the exact source file before making any edits. "
                     "This summary is for orientation only. Do not edit based solely on this cache."
                 ) if getattr(config, "require_source_before_edit", True) else "Read source before editing."
-                confidence = _summary_confidence(obj.get("created_at"))
+                
+                if stale:
+                    note = "File was modified after this summary was written. Read the file and call cache_summary()."
+                
                 return {
                     "summary": obj["summary"],
                     "summary_type": "ai",
                     "cached": True,
                     "file_path": file_path,
                     "language": language,
+                    "stale": stale,
                     "note": note,
                     "summary_confidence": confidence,
                     "quality_score": obj.get("quality_score") or compute_quality_score(obj["summary"], obj.get("file_size_bytes") or 0),
+                    **{k: v for k, v in disk_obj.items() if k.endswith("_summary") and k != "summary"}
                 }
             if obj and obj["summary_type"] == "static":
+                _track_read(rel)
                 return {
                     "summary": obj["summary"],
                     "summary_type": "static",
                     "cached": True,
                     "file_path": file_path,
                     "language": language,
+                    "stale": stale,
                     "note": "Static index only. Read file for full understanding, then call cache_summary().",
                     "quality_score": obj.get("quality_score") or compute_quality_score(obj["summary"], obj.get("file_size_bytes") or 0),
+                    **{k: v for k, v in disk_obj.items() if k.endswith("_summary") and k != "summary"}
                 }
+            
+            _track_read(rel)
             return {
                 "summary": None,
                 "summary_type": None,
@@ -158,7 +203,7 @@ def run_server() -> None:
             return {"error": str(exc)}
 
     @mcp.tool()
-    def cache_summary(file_path: str, summary: str, language: str) -> dict[str, Any]:
+    def cache_summary(file_path: str, summary: str, language: str, summary_role: str = "developer") -> dict[str, Any]:
         try:
             rel, path = _sanitize_path(repo_root, repo_resolved, file_path)
             if rel is None or path is None:
@@ -190,10 +235,10 @@ def run_server() -> None:
             content = path.read_bytes()
             fhash = file_hash(content)
             key = cache_key(fhash, config.schema_version)
-            if key in _WRITTEN_THIS_SESSION:
+            if key in _WRITTEN_THIS_SESSION and summary_role == "developer":
                 return {"stored": False, "reason": "already written this session"}
             existing = get_summary(read_conn, key)
-            if existing and existing["summary_type"] == "ai":
+            if existing and existing["summary_type"] == "ai" and summary_role == "developer":
                 return {
                     "stored": False,
                     "reason": "ai summary already cached",
@@ -201,23 +246,33 @@ def run_server() -> None:
                 }
 
             created_by = git_user_email(repo_root)
-            obj = {
-                "cache_key": key,
-                "file_path": rel,
-                "file_hash": fhash,
-                "summary": summary.strip(),
-                "summary_type": "ai",
-                "schema_version": config.schema_version,
-                "created_at": datetime.now(tz=timezone.utc).isoformat().replace("+00:00", "Z"),
-                "created_by": created_by,
-                "file_size_bytes": len(content),
-                "language": language,
-            }
+            disk_obj = store.read(key)
+            if disk_obj:
+                obj = dict(disk_obj)
+            else:
+                obj = {
+                    "cache_key": key,
+                    "file_path": rel,
+                    "file_hash": fhash,
+                    "schema_version": config.schema_version,
+                    "created_at": datetime.now(tz=timezone.utc).isoformat().replace("+00:00", "Z"),
+                    "created_by": created_by,
+                    "file_size_bytes": len(content),
+                    "language": language,
+                }
+
+            obj[f"{summary_role}_summary"] = summary.strip()
+            if summary_role == "developer" or "summary" not in obj:
+                obj["summary"] = summary.strip()
+                obj["summary_type"] = "ai"
+                obj["created_by"] = created_by
+
             store.write(key, obj)
             insert_summary(write_conn, obj)
             upsert_embedding(emb_conn, key, rel, summary.strip(), "ai")
             write_audit_event(write_conn, "write", key, rel, created_by, "ai")
-            _WRITTEN_THIS_SESSION.add(key)
+            if summary_role == "developer":
+                _WRITTEN_THIS_SESSION.add(key)
             return {"stored": True, "cache_key": key, "summary_type": "ai"}
         except Exception as exc:  # noqa: BLE001
             return {"stored": False, "error": str(exc)}
@@ -512,6 +567,17 @@ def run_server() -> None:
                 ai_count += 1
             if summary_type is None or summary_type == "static":
                 files_needing_review.append(rel)
+            needs_resummary = False
+            if has_ai_summary and mtime and obj.get("created_at"):
+                try:
+                    git_ts = datetime.fromisoformat(mtime.replace(" ", "T", 1))
+                    if git_ts.tzinfo is None:
+                        git_ts = git_ts.replace(tzinfo=timezone.utc)
+                    created = datetime.fromisoformat(obj["created_at"].replace("Z", "+00:00"))
+                    needs_resummary = git_ts > created
+                except (ValueError, TypeError):
+                    pass
+
             changed_files.append(
                 {
                     "file_path": rel,
@@ -519,6 +585,7 @@ def run_server() -> None:
                     "has_ai_summary": has_ai_summary,
                     "has_static_summary": has_static_summary,
                     "last_modified": mtime,
+                    "needs_resummary": needs_resummary,
                 }
             )
         total = len(changed_files)

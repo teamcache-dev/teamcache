@@ -65,6 +65,9 @@ That's it. Your AI tool now calls `get_file_context()` before reading any file a
 | `teamcache changed [--since BRANCH]` | Re-index files changed since a branch |
 | `teamcache sync` | Rebuild local index from committed objects |
 | `teamcache invalidate [PATH\|--stale\|--all]` | Mark entries as needing refresh |
+| `teamcache check-cached FILE` | Check if file has an AI summary (exits 0 if yes, 1 if no) |
+| `teamcache session-uncached` | List files read by AI this session that lack an AI summary |
+| `teamcache pr-check [--since BRANCH]` | Verify that files changed since a branch have AI summaries |
 | `teamcache stats` | Show AI vs static coverage, top contributors |
 | `teamcache metrics [--format json] [--since DATE]` | Cache performance metrics |
 | `teamcache report` | Write `.teamcache/reports/YYYY-MM.md` |
