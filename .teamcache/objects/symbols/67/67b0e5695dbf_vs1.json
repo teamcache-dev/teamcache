@@ -1,0 +1,44 @@
+{
+  "cache_key": "67b0e5695dbfd03762735f16327f6b3a6999b0613362534131b770ac0c57e590",
+  "file_path": "teamcache/config.py",
+  "file_hash": "47e42f1daa0b0036813df2cc46bac0fc7f5b23c7267d5e716a06ea3176649aee",
+  "schema_version": "vs1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "find_repo_root",
+        "line": null,
+        "signature": "find_repo_root"
+      },
+      {
+        "name": "load_config",
+        "line": null,
+        "signature": "load_config"
+      },
+      {
+        "name": "write_config",
+        "line": null,
+        "signature": "write_config"
+      }
+    ],
+    "classes": [
+      {
+        "name": "TeamCacheConfig",
+        "line": null,
+        "methods": []
+      }
+    ],
+    "imports": [
+      "yaml",
+      "__future__",
+      "dataclasses",
+      "pathlib",
+      ".constants"
+    ],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:45:21.637281Z",
+  "created_by": "unknown"
+}

@@ -1,0 +1,16 @@
+{
+  "cache_key": "07e3cb47afc2375e00d06d4e331237b7fc2e4e1a2c2596bd5beed35204c3e71c",
+  "file_path": ".teamcache/objects/symbols/de/dead59ec2fb6_v1.json",
+  "file_hash": "3d3c98e31e7b882899d119294e75155ea52bdd55b9f37bfe7184fbf3e58b4230",
+  "schema_version": "vs1",
+  "language": "json",
+  "symbols": {
+    "functions": [],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:45:14.013489Z",
+  "created_by": "unknown"
+}

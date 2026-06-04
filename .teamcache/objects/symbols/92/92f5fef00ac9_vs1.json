@@ -1,0 +1,147 @@
+{
+  "cache_key": "92f5fef00ac9c637657b23e338e675eefee2e594c619ab57288fe428d61de041",
+  "file_path": "tests/test_symbols_cpp.py",
+  "file_hash": "7421d0c0fd6d0adbe9bb4cecb1f91556d99226f655c79981e331b812be8dfb47",
+  "schema_version": "vs1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "_extract",
+        "line": null,
+        "signature": "_extract"
+      },
+      {
+        "name": "_cpp",
+        "line": null,
+        "signature": "_cpp"
+      },
+      {
+        "name": "_c",
+        "line": null,
+        "signature": "_c"
+      },
+      {
+        "name": "test_cpp_system_include",
+        "line": null,
+        "signature": "test_cpp_system_include"
+      },
+      {
+        "name": "test_cpp_local_include",
+        "line": null,
+        "signature": "test_cpp_local_include"
+      },
+      {
+        "name": "test_cpp_multiple_includes",
+        "line": null,
+        "signature": "test_cpp_multiple_includes"
+      },
+      {
+        "name": "test_cpp_using_namespace",
+        "line": null,
+        "signature": "test_cpp_using_namespace"
+      },
+      {
+        "name": "test_cpp_using_scoped",
+        "line": null,
+        "signature": "test_cpp_using_scoped"
+      },
+      {
+        "name": "test_cpp_free_function",
+        "line": null,
+        "signature": "test_cpp_free_function"
+      },
+      {
+        "name": "test_cpp_function_has_line",
+        "line": null,
+        "signature": "test_cpp_function_has_line"
+      },
+      {
+        "name": "test_cpp_function_has_end_line",
+        "line": null,
+        "signature": "test_cpp_function_has_end_line"
+      },
+      {
+        "name": "test_cpp_function_has_calls",
+        "line": null,
+        "signature": "test_cpp_function_has_calls"
+      },
+      {
+        "name": "test_cpp_multiple_functions",
+        "line": null,
+        "signature": "test_cpp_multiple_functions"
+      },
+      {
+        "name": "test_cpp_scoped_method_definition",
+        "line": null,
+        "signature": "test_cpp_scoped_method_definition"
+      },
+      {
+        "name": "test_cpp_class",
+        "line": null,
+        "signature": "test_cpp_class"
+      },
+      {
+        "name": "test_cpp_class_has_methods",
+        "line": null,
+        "signature": "test_cpp_class_has_methods"
+      },
+      {
+        "name": "test_cpp_class_method_has_line",
+        "line": null,
+        "signature": "test_cpp_class_method_has_line"
+      },
+      {
+        "name": "test_cpp_struct",
+        "line": null,
+        "signature": "test_cpp_struct"
+      },
+      {
+        "name": "test_cpp_no_duplicate_symbols",
+        "line": null,
+        "signature": "test_cpp_no_duplicate_symbols"
+      },
+      {
+        "name": "test_cpp_template_function",
+        "line": null,
+        "signature": "test_cpp_template_function"
+      },
+      {
+        "name": "test_c_free_function",
+        "line": null,
+        "signature": "test_c_free_function"
+      },
+      {
+        "name": "test_c_include",
+        "line": null,
+        "signature": "test_c_include"
+      },
+      {
+        "name": "test_c_struct",
+        "line": null,
+        "signature": "test_c_struct"
+      },
+      {
+        "name": "test_cpp_symbols_shape",
+        "line": null,
+        "signature": "test_cpp_symbols_shape"
+      },
+      {
+        "name": "test_cpp_empty_file_returns_empty_symbols",
+        "line": null,
+        "signature": "test_cpp_empty_file_returns_empty_symbols"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "pytest",
+      "__future__",
+      "pathlib",
+      "teamcache.symbols"
+    ],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:45:21.671231Z",
+  "created_by": "unknown"
+}

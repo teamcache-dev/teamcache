@@ -1,0 +1,16 @@
+{
+  "cache_key": "1e6b789d3d3de44e7b006f851e31c3efb868be82a7879844fc800880f03ed4c8",
+  "file_path": ".teamcache/objects/summaries/da/dac10270a24d_v1.json",
+  "file_hash": "7ca8ef800268000c17dc433bb15e5fbbcb871f680e635234acb646b2169337dd",
+  "schema_version": "vs1",
+  "language": "json",
+  "symbols": {
+    "functions": [],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:44:15.676654Z",
+  "created_by": "unknown"
+}

@@ -1,0 +1,76 @@
+{
+  "cache_key": "6a16aedb1df9d60b1c1cc5869bd40c9e2f985392524b3dae06b1b9285a00e9a3",
+  "file_path": "tests/test_hooks.py",
+  "file_hash": "1e71b7fdd228ae93b2cc1ce2a1a3ab88a84ff8682eb16ab7b6aea99a98179b09",
+  "schema_version": "vs1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "_git_config_get",
+        "line": null,
+        "signature": "_git_config_get"
+      },
+      {
+        "name": "_make_executable_hook",
+        "line": null,
+        "signature": "_make_executable_hook"
+      },
+      {
+        "name": "test_init_does_not_install_post_commit_hook",
+        "line": null,
+        "signature": "test_init_does_not_install_post_commit_hook"
+      },
+      {
+        "name": "test_init_enable_hooks_does_not_install_post_commit_hook",
+        "line": null,
+        "signature": "test_init_enable_hooks_does_not_install_post_commit_hook"
+      },
+      {
+        "name": "test_init_no_flags_does_not_set_hooksPath",
+        "line": null,
+        "signature": "test_init_no_flags_does_not_set_hooksPath"
+      },
+      {
+        "name": "test_init_enable_hooks_no_conflict_installs_post_merge",
+        "line": null,
+        "signature": "test_init_enable_hooks_no_conflict_installs_post_merge"
+      },
+      {
+        "name": "test_init_enable_hooks_with_conflict_exits_nonzero",
+        "line": null,
+        "signature": "test_init_enable_hooks_with_conflict_exits_nonzero"
+      },
+      {
+        "name": "test_init_enable_hooks_force_succeeds",
+        "line": null,
+        "signature": "test_init_enable_hooks_force_succeeds"
+      },
+      {
+        "name": "test_post_merge_hook_has_no_amend_line",
+        "line": null,
+        "signature": "test_post_merge_hook_has_no_amend_line"
+      },
+      {
+        "name": "test_migrate_hooks_removes_amend_lines",
+        "line": null,
+        "signature": "test_migrate_hooks_removes_amend_lines"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "os",
+      "stat",
+      "subprocess",
+      "sys",
+      "pytest",
+      "__future__",
+      "pathlib",
+      "tests.conftest"
+    ],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:45:21.664660Z",
+  "created_by": "unknown"
+}

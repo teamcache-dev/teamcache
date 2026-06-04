@@ -1,0 +1,16 @@
+{
+  "cache_key": "249d4d5d286b1ee28b65fc65def2e767771a25e3afe7f224482bbdb161624817",
+  "file_path": ".teamcache/objects/symbols/de/deb45018a483_v1.json",
+  "file_hash": "649c219d758b16ab4c9739e33f441082f4efb07fe971f3ec8cda3ed8edba1a89",
+  "schema_version": "vs1",
+  "language": "json",
+  "symbols": {
+    "functions": [],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:45:14.018398Z",
+  "created_by": "unknown"
+}

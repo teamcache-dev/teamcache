@@ -1,0 +1,166 @@
+{
+  "cache_key": "e282dbe861f5bb6bbdf6bd6c5d3987d34409856603d511fa8f4171f72bb0c91a",
+  "file_path": "teamcache/db.py",
+  "file_hash": "acab12ac283ceda3f7fd06b0d3f1645334088711779fb53e3b1874442668f8db",
+  "schema_version": "vs1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "_run_migrations",
+        "line": null,
+        "signature": "_run_migrations"
+      },
+      {
+        "name": "connect",
+        "line": null,
+        "signature": "connect"
+      },
+      {
+        "name": "compute_quality_score",
+        "line": null,
+        "signature": "compute_quality_score"
+      },
+      {
+        "name": "insert_summary",
+        "line": null,
+        "signature": "insert_summary"
+      },
+      {
+        "name": "get_summary",
+        "line": null,
+        "signature": "get_summary"
+      },
+      {
+        "name": "get_summary_by_path",
+        "line": null,
+        "signature": "get_summary_by_path"
+      },
+      {
+        "name": "keyword_search",
+        "line": null,
+        "signature": "keyword_search"
+      },
+      {
+        "name": "rebuild_from_objects",
+        "line": null,
+        "signature": "rebuild_from_objects"
+      },
+      {
+        "name": "optimize_fts",
+        "line": null,
+        "signature": "optimize_fts"
+      },
+      {
+        "name": "count_by_type",
+        "line": null,
+        "signature": "count_by_type"
+      },
+      {
+        "name": "insert_symbol",
+        "line": null,
+        "signature": "insert_symbol"
+      },
+      {
+        "name": "get_symbol",
+        "line": null,
+        "signature": "get_symbol"
+      },
+      {
+        "name": "get_symbol_by_path",
+        "line": null,
+        "signature": "get_symbol_by_path"
+      },
+      {
+        "name": "find_symbol_by_name",
+        "line": null,
+        "signature": "find_symbol_by_name"
+      },
+      {
+        "name": "rebuild_symbols",
+        "line": null,
+        "signature": "rebuild_symbols"
+      },
+      {
+        "name": "invalidate_by_path",
+        "line": null,
+        "signature": "invalidate_by_path"
+      },
+      {
+        "name": "invalidate_stale",
+        "line": null,
+        "signature": "invalidate_stale"
+      },
+      {
+        "name": "invalidate_all",
+        "line": null,
+        "signature": "invalidate_all"
+      },
+      {
+        "name": "summary_count",
+        "line": null,
+        "signature": "summary_count"
+      },
+      {
+        "name": "symbol_count",
+        "line": null,
+        "signature": "symbol_count"
+      },
+      {
+        "name": "coverage_stats",
+        "line": null,
+        "signature": "coverage_stats"
+      },
+      {
+        "name": "top_contributors",
+        "line": null,
+        "signature": "top_contributors"
+      },
+      {
+        "name": "static_only_files",
+        "line": null,
+        "signature": "static_only_files"
+      },
+      {
+        "name": "record_cache_event",
+        "line": null,
+        "signature": "record_cache_event"
+      },
+      {
+        "name": "write_audit_event",
+        "line": null,
+        "signature": "write_audit_event"
+      },
+      {
+        "name": "metrics_summary",
+        "line": null,
+        "signature": "metrics_summary"
+      },
+      {
+        "name": "_symbol_row_to_dict",
+        "line": null,
+        "signature": "_symbol_row_to_dict"
+      },
+      {
+        "name": "_symbol_names",
+        "line": null,
+        "signature": "_symbol_names"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "json",
+      "sqlite3",
+      "sys",
+      "__future__",
+      "datetime",
+      "pathlib",
+      "typing",
+      ".search"
+    ],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:45:21.639860Z",
+  "created_by": "unknown"
+}

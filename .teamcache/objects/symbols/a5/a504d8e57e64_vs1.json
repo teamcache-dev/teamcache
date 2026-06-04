@@ -1,0 +1,240 @@
+{
+  "cache_key": "a504d8e57e64806b83df6acd580d6c1e4844a80ece9e0e45a5a35ff9a5f01510",
+  "file_path": "teamcache/symbols.py",
+  "file_hash": "048dcfefc0bef5586ce1e2e8111b1ff7166c2265d5e31454205367a4f8c50800",
+  "schema_version": "vs1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "extract_symbols",
+        "line": null,
+        "signature": "extract_symbols"
+      },
+      {
+        "name": "write_symbol_object",
+        "line": null,
+        "signature": "write_symbol_object"
+      },
+      {
+        "name": "summary_from_symbols",
+        "line": null,
+        "signature": "summary_from_symbols"
+      },
+      {
+        "name": "_empty_symbols",
+        "line": null,
+        "signature": "_empty_symbols"
+      },
+      {
+        "name": "_get_parser",
+        "line": null,
+        "signature": "_get_parser"
+      },
+      {
+        "name": "_extract_python",
+        "line": null,
+        "signature": "_extract_python"
+      },
+      {
+        "name": "_extract_js_ts",
+        "line": null,
+        "signature": "_extract_js_ts"
+      },
+      {
+        "name": "_extract_go",
+        "line": null,
+        "signature": "_extract_go"
+      },
+      {
+        "name": "_extract_java",
+        "line": null,
+        "signature": "_extract_java"
+      },
+      {
+        "name": "_extract_rust",
+        "line": null,
+        "signature": "_extract_rust"
+      },
+      {
+        "name": "_extract_csharp",
+        "line": null,
+        "signature": "_extract_csharp"
+      },
+      {
+        "name": "_extract_ruby",
+        "line": null,
+        "signature": "_extract_ruby"
+      },
+      {
+        "name": "_extract_kotlin",
+        "line": null,
+        "signature": "_extract_kotlin"
+      },
+      {
+        "name": "_extract_php",
+        "line": null,
+        "signature": "_extract_php"
+      },
+      {
+        "name": "_extract_cpp",
+        "line": null,
+        "signature": "_extract_cpp"
+      },
+      {
+        "name": "_fallback_symbols",
+        "line": null,
+        "signature": "_fallback_symbols"
+      },
+      {
+        "name": "_function_obj",
+        "line": null,
+        "signature": "_function_obj"
+      },
+      {
+        "name": "_node_name",
+        "line": null,
+        "signature": "_node_name"
+      },
+      {
+        "name": "_python_import_name",
+        "line": null,
+        "signature": "_python_import_name"
+      },
+      {
+        "name": "_java_import_name",
+        "line": null,
+        "signature": "_java_import_name"
+      },
+      {
+        "name": "_rust_use_name",
+        "line": null,
+        "signature": "_rust_use_name"
+      },
+      {
+        "name": "_csharp_using_name",
+        "line": null,
+        "signature": "_csharp_using_name"
+      },
+      {
+        "name": "_ruby_require_name",
+        "line": null,
+        "signature": "_ruby_require_name"
+      },
+      {
+        "name": "_kotlin_import_name",
+        "line": null,
+        "signature": "_kotlin_import_name"
+      },
+      {
+        "name": "_php_namespace_use_names",
+        "line": null,
+        "signature": "_php_namespace_use_names"
+      },
+      {
+        "name": "_cpp_include_name",
+        "line": null,
+        "signature": "_cpp_include_name"
+      },
+      {
+        "name": "_cpp_using_name",
+        "line": null,
+        "signature": "_cpp_using_name"
+      },
+      {
+        "name": "_cpp_function_name",
+        "line": null,
+        "signature": "_cpp_function_name"
+      },
+      {
+        "name": "_go_receiver",
+        "line": null,
+        "signature": "_go_receiver"
+      },
+      {
+        "name": "_exported_name",
+        "line": null,
+        "signature": "_exported_name"
+      },
+      {
+        "name": "_string_child_value",
+        "line": null,
+        "signature": "_string_child_value"
+      },
+      {
+        "name": "_field",
+        "line": null,
+        "signature": "_field"
+      },
+      {
+        "name": "_decorated_definition",
+        "line": null,
+        "signature": "_decorated_definition"
+      },
+      {
+        "name": "_walk",
+        "line": null,
+        "signature": "_walk"
+      },
+      {
+        "name": "_nodes_of_type",
+        "line": null,
+        "signature": "_nodes_of_type"
+      },
+      {
+        "name": "_text",
+        "line": null,
+        "signature": "_text"
+      },
+      {
+        "name": "_first_line",
+        "line": null,
+        "signature": "_first_line"
+      },
+      {
+        "name": "_strip_quotes",
+        "line": null,
+        "signature": "_strip_quotes"
+      },
+      {
+        "name": "_append",
+        "line": null,
+        "signature": "_append"
+      },
+      {
+        "name": "_string_values",
+        "line": null,
+        "signature": "_string_values"
+      },
+      {
+        "name": "_named_values",
+        "line": null,
+        "signature": "_named_values"
+      },
+      {
+        "name": "_dedupe_symbols",
+        "line": null,
+        "signature": "_dedupe_symbols"
+      },
+      {
+        "name": "_unique",
+        "line": null,
+        "signature": "_unique"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "json",
+      "os",
+      "re",
+      "__future__",
+      "pathlib",
+      "typing",
+      ".files"
+    ],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:45:21.650670Z",
+  "created_by": "unknown"
+}

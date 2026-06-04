@@ -1,0 +1,16 @@
+{
+  "cache_key": "688aab2b9072ab1e2ad1cfcfd7801241497fe0e8bb54d865aed2a6cf32f19579",
+  "file_path": ".teamcache/objects/symbols/dc/dc20610fabac_v1.json",
+  "file_hash": "f267b3c13e9afd9be41ae4f311e324e8dc2bc4e51011f81d16b4a82d801bc9db",
+  "schema_version": "vs1",
+  "language": "json",
+  "symbols": {
+    "functions": [],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:45:13.463826Z",
+  "created_by": "unknown"
+}

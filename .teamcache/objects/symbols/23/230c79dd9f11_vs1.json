@@ -1,0 +1,16 @@
+{
+  "cache_key": "230c79dd9f11d3a59c86626667554d49be4871f8cd52644a48fcf8a16937f0b7",
+  "file_path": ".teamcache/objects/symbols/fd/fda013e45658_v1.json",
+  "file_hash": "c3eb81befd3506f6a95c9689aa67dad28c50186e89f25465139c92f2aa58a5fa",
+  "schema_version": "vs1",
+  "language": "json",
+  "symbols": {
+    "functions": [],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:45:21.064758Z",
+  "created_by": "unknown"
+}

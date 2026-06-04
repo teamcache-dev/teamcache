@@ -1,0 +1,16 @@
+{
+  "cache_key": "f0d9944b388a2d4bfd5241bcf76f1837ddfc334c3b7c246aa5eac7e1f35e7a84",
+  "file_path": ".teamcache/objects/symbols/bd/bdfbfeed2e27_v1.json",
+  "file_hash": "10be58fa75d66bcf7af05f50514df220d12ba618c80660c1dbe991b13e67f6ae",
+  "schema_version": "vs1",
+  "language": "json",
+  "symbols": {
+    "functions": [],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:45:06.672047Z",
+  "created_by": "unknown"
+}

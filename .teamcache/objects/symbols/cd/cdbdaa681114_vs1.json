@@ -1,0 +1,69 @@
+{
+  "cache_key": "cdbdaa681114a292f2d918dfa63561634a058e730e769d135ab210024380d22e",
+  "file_path": "tests/test_db_migration.py",
+  "file_hash": "b4fe9f4c88230fc0e5c958e47615c7a545ce24a5e926588722fb25f6f475ccae",
+  "schema_version": "vs1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "db_path",
+        "line": null,
+        "signature": "db_path"
+      },
+      {
+        "name": "conn",
+        "line": null,
+        "signature": "conn"
+      },
+      {
+        "name": "_summary",
+        "line": null,
+        "signature": "_summary"
+      },
+      {
+        "name": "_old_timestamp",
+        "line": null,
+        "signature": "_old_timestamp"
+      },
+      {
+        "name": "_recent_timestamp",
+        "line": null,
+        "signature": "_recent_timestamp"
+      },
+      {
+        "name": "test_migration_adds_last_accessed_at_column",
+        "line": null,
+        "signature": "test_migration_adds_last_accessed_at_column"
+      },
+      {
+        "name": "test_migration_is_idempotent",
+        "line": null,
+        "signature": "test_migration_is_idempotent"
+      },
+      {
+        "name": "test_invalidate_stale_uses_last_accessed",
+        "line": null,
+        "signature": "test_invalidate_stale_uses_last_accessed"
+      },
+      {
+        "name": "test_invalidate_stale_evicts_old_unaccessed",
+        "line": null,
+        "signature": "test_invalidate_stale_evicts_old_unaccessed"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "sqlite3",
+      "pytest",
+      "__future__",
+      "datetime",
+      "pathlib",
+      "teamcache.db"
+    ],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:45:21.660835Z",
+  "created_by": "unknown"
+}

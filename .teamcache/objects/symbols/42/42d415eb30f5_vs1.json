@@ -1,0 +1,16 @@
+{
+  "cache_key": "42d415eb30f52b5ad1ea2446b7c7949056b8dc9582ca30f0e998a77c413beaf4",
+  "file_path": ".teamcache/objects/summaries/be/beba0211cdd0_v1.json",
+  "file_hash": "8f3a9f3aaa12100713c40b906c1a416f87082b81a8f515682f762d043744f423",
+  "schema_version": "vs1",
+  "language": "json",
+  "symbols": {
+    "functions": [],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:44:09.338283Z",
+  "created_by": "unknown"
+}

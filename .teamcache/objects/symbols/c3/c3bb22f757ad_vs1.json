@@ -1,0 +1,25 @@
+{
+  "cache_key": "c3bb22f757ad8a5a791533ca031a60707e36a8b53dd50627242a09e5e01cb232",
+  "file_path": "teamcache/__main__.py",
+  "file_hash": "4d5ac5f3e75bfd96ddb6380df68855111602bf0960ec28e1d4f3f0aff0590d2d",
+  "schema_version": "vs1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "main",
+        "line": null,
+        "signature": "main"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "__future__",
+      ".cli"
+    ],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:45:21.632890Z",
+  "created_by": "unknown"
+}

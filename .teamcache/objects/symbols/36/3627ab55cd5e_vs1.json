@@ -1,0 +1,22 @@
+{
+  "cache_key": "3627ab55cd5e0d46257448dae1865aad4d5b1370287034f158c0b2594ccd5ee2",
+  "file_path": "TEAMCACHE_COMPLETE_SPEC.md",
+  "file_hash": "76830328d8d9cf9de4fef7fcc5aa09dc92c7d01a8bddca3b772b0b337f6b3e98",
+  "schema_version": "vs1",
+  "language": "markdown",
+  "symbols": {
+    "functions": [
+      {
+        "name": "is_binary",
+        "line": null,
+        "signature": "is_binary"
+      }
+    ],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:45:21.622541Z",
+  "created_by": "unknown"
+}

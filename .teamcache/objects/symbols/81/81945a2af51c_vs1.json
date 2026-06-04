@@ -1,0 +1,136 @@
+{
+  "cache_key": "81945a2af51cc05007cdba5fac296778ad56d4def8f8a415aac9c6b32db9d6c9",
+  "file_path": "tests/test_cli_install.py",
+  "file_hash": "6af7cc496fa95c8da50a24bc3ac9127151c316b209d917c8b151b0fc971f3865",
+  "schema_version": "vs1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "repo",
+        "line": null,
+        "signature": "repo"
+      },
+      {
+        "name": "invoke",
+        "line": null,
+        "signature": "invoke"
+      },
+      {
+        "name": "test_install_preserves_existing_agents_content",
+        "line": null,
+        "signature": "test_install_preserves_existing_agents_content"
+      },
+      {
+        "name": "test_install_preserves_existing_claude_content",
+        "line": null,
+        "signature": "test_install_preserves_existing_claude_content"
+      },
+      {
+        "name": "test_install_preserves_existing_cursorrules_content",
+        "line": null,
+        "signature": "test_install_preserves_existing_cursorrules_content"
+      },
+      {
+        "name": "test_install_preserves_existing_windsurfrules_content",
+        "line": null,
+        "signature": "test_install_preserves_existing_windsurfrules_content"
+      },
+      {
+        "name": "test_repeated_install_is_idempotent",
+        "line": null,
+        "signature": "test_repeated_install_is_idempotent"
+      },
+      {
+        "name": "test_repeated_uninstall_is_idempotent",
+        "line": null,
+        "signature": "test_repeated_uninstall_is_idempotent"
+      },
+      {
+        "name": "test_uninstall_without_teamcache_block_is_noop",
+        "line": null,
+        "signature": "test_uninstall_without_teamcache_block_is_noop"
+      },
+      {
+        "name": "test_install_uninstall_round_trip_preserves_files_without_trailing_newline",
+        "line": null,
+        "signature": "test_install_uninstall_round_trip_preserves_files_without_trailing_newline"
+      },
+      {
+        "name": "test_malformed_cursor_mcp_json_fails_closed",
+        "line": null,
+        "signature": "test_malformed_cursor_mcp_json_fails_closed"
+      },
+      {
+        "name": "test_malformed_cursor_mcp_json_fails_closed_on_uninstall",
+        "line": null,
+        "signature": "test_malformed_cursor_mcp_json_fails_closed_on_uninstall"
+      },
+      {
+        "name": "test_json_config_with_invalid_shape_fails_closed",
+        "line": null,
+        "signature": "test_json_config_with_invalid_shape_fails_closed"
+      },
+      {
+        "name": "test_json_config_with_invalid_mcpservers_shape_fails_closed_on_uninstall",
+        "line": null,
+        "signature": "test_json_config_with_invalid_mcpservers_shape_fails_closed_on_uninstall"
+      },
+      {
+        "name": "test_dry_run_creates_or_modifies_no_files",
+        "line": null,
+        "signature": "test_dry_run_creates_or_modifies_no_files"
+      },
+      {
+        "name": "test_print_diff_shows_expected_changes",
+        "line": null,
+        "signature": "test_print_diff_shows_expected_changes"
+      },
+      {
+        "name": "test_uninstall_dry_run_creates_or_modifies_no_files",
+        "line": null,
+        "signature": "test_uninstall_dry_run_creates_or_modifies_no_files"
+      },
+      {
+        "name": "test_backup_files_are_created_before_install_mutation",
+        "line": null,
+        "signature": "test_backup_files_are_created_before_install_mutation"
+      },
+      {
+        "name": "test_backup_file_is_created_before_uninstall_mutation",
+        "line": null,
+        "signature": "test_backup_file_is_created_before_uninstall_mutation"
+      },
+      {
+        "name": "test_install_gemini_writes_extension_files",
+        "line": null,
+        "signature": "test_install_gemini_writes_extension_files"
+      },
+      {
+        "name": "test_uninstall_gemini_removes_extension_files",
+        "line": null,
+        "signature": "test_uninstall_gemini_removes_extension_files"
+      },
+      {
+        "name": "test_install_gemini_is_idempotent",
+        "line": null,
+        "signature": "test_install_gemini_is_idempotent"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "json",
+      "subprocess",
+      "pytest",
+      "teamcache.cli",
+      "__future__",
+      "pathlib",
+      "types",
+      "click.testing"
+    ],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:45:21.656445Z",
+  "created_by": "unknown"
+}

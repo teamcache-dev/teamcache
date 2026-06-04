@@ -1,0 +1,16 @@
+{
+  "cache_key": "4dcccd7a8979efe2d9e2d6ebfed7064ba63e3e48b16ba8f83ef233b7b661540c",
+  "file_path": ".teamcache/objects/summaries/be/beef69ea024a_v1.json",
+  "file_hash": "51c58d05d9c099ca0af014e2cdb0cd4e3055ec9bc2c8a635a5174bcaf0b29aae",
+  "schema_version": "vs1",
+  "language": "json",
+  "symbols": {
+    "functions": [],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:44:09.387307Z",
+  "created_by": "unknown"
+}

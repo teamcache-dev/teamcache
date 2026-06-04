@@ -1,0 +1,75 @@
+{
+  "cache_key": "bdd817524fd395674d41c1a8e1a9a7704e88c530ffa85cacc49f182cdd0ea549",
+  "file_path": "tests/test_repomap.py",
+  "file_hash": "6d590b6227998b2e7e64780595590e2d97114c7ab859af43df4a1f4778ddb4d8",
+  "schema_version": "vs1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "repo",
+        "line": null,
+        "signature": "repo"
+      },
+      {
+        "name": "_init_and_index",
+        "line": null,
+        "signature": "_init_and_index"
+      },
+      {
+        "name": "_add_tracked",
+        "line": null,
+        "signature": "_add_tracked"
+      },
+      {
+        "name": "_repomap",
+        "line": null,
+        "signature": "_repomap"
+      },
+      {
+        "name": "test_repomap_has_reverse_imports_key",
+        "line": null,
+        "signature": "test_repomap_has_reverse_imports_key"
+      },
+      {
+        "name": "test_reverse_imports_single_importer",
+        "line": null,
+        "signature": "test_reverse_imports_single_importer"
+      },
+      {
+        "name": "test_reverse_imports_multiple_importers",
+        "line": null,
+        "signature": "test_reverse_imports_multiple_importers"
+      },
+      {
+        "name": "test_reverse_imports_no_self_loops",
+        "line": null,
+        "signature": "test_reverse_imports_no_self_loops"
+      },
+      {
+        "name": "test_reverse_imports_no_duplicates",
+        "line": null,
+        "signature": "test_reverse_imports_no_duplicates"
+      },
+      {
+        "name": "test_reverse_imports_populated_after_index",
+        "line": null,
+        "signature": "test_reverse_imports_populated_after_index"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "json",
+      "subprocess",
+      "pytest",
+      "__future__",
+      "pathlib",
+      "click.testing",
+      "teamcache.cli"
+    ],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:45:21.665939Z",
+  "created_by": "unknown"
+}

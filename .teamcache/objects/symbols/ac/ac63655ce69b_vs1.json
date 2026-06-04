@@ -1,0 +1,102 @@
+{
+  "cache_key": "ac63655ce69b79139264a50dce32de413c358b3d8ecd574ec16af3c1c61b33fb",
+  "file_path": "tests/test_symbols.py",
+  "file_hash": "3d441ab0cd47a2a5bfad034cc29e7c19c382145e741f92ec7a6929af41bb713e",
+  "schema_version": "vs1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "_extract",
+        "line": null,
+        "signature": "_extract"
+      },
+      {
+        "name": "test_csharp_extracts_classes",
+        "line": null,
+        "signature": "test_csharp_extracts_classes"
+      },
+      {
+        "name": "test_csharp_extracts_class_methods",
+        "line": null,
+        "signature": "test_csharp_extracts_class_methods"
+      },
+      {
+        "name": "test_csharp_extracts_using_directives",
+        "line": null,
+        "signature": "test_csharp_extracts_using_directives"
+      },
+      {
+        "name": "test_ruby_extracts_classes",
+        "line": null,
+        "signature": "test_ruby_extracts_classes"
+      },
+      {
+        "name": "test_ruby_extracts_methods_as_functions",
+        "line": null,
+        "signature": "test_ruby_extracts_methods_as_functions"
+      },
+      {
+        "name": "test_ruby_extracts_require_calls",
+        "line": null,
+        "signature": "test_ruby_extracts_require_calls"
+      },
+      {
+        "name": "test_kotlin_extracts_classes_and_objects",
+        "line": null,
+        "signature": "test_kotlin_extracts_classes_and_objects"
+      },
+      {
+        "name": "test_kotlin_extracts_functions",
+        "line": null,
+        "signature": "test_kotlin_extracts_functions"
+      },
+      {
+        "name": "test_kotlin_extracts_import_headers",
+        "line": null,
+        "signature": "test_kotlin_extracts_import_headers"
+      },
+      {
+        "name": "test_php_extracts_classes_and_interfaces",
+        "line": null,
+        "signature": "test_php_extracts_classes_and_interfaces"
+      },
+      {
+        "name": "test_php_extracts_functions_and_methods",
+        "line": null,
+        "signature": "test_php_extracts_functions_and_methods"
+      },
+      {
+        "name": "test_php_extracts_namespace_use_declarations",
+        "line": null,
+        "signature": "test_php_extracts_namespace_use_declarations"
+      },
+      {
+        "name": "test_function_obj_has_end_line",
+        "line": null,
+        "signature": "test_function_obj_has_end_line"
+      },
+      {
+        "name": "test_function_obj_has_calls",
+        "line": null,
+        "signature": "test_function_obj_has_calls"
+      },
+      {
+        "name": "test_calls_not_in_symbol_names",
+        "line": null,
+        "signature": "test_calls_not_in_symbol_names"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "pytest",
+      "teamcache.symbols",
+      "__future__",
+      "pathlib"
+    ],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:45:21.669893Z",
+  "created_by": "unknown"
+}

@@ -1,0 +1,16 @@
+{
+  "cache_key": "f6f3ee5b012d6628930cb536dcdb4a146b2d9d2f62e5c11fe0eadc0eac60c8e4",
+  "file_path": ".teamcache/objects/symbols/1f/1f634dc07da5_v1.json",
+  "file_hash": "e8c1fd35017b2384b134e4965c046def6a3d0aff4ddb501687d93c32537edd9d",
+  "schema_version": "vs1",
+  "language": "json",
+  "symbols": {
+    "functions": [],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:44:31.242692Z",
+  "created_by": "unknown"
+}

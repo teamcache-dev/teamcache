@@ -1,0 +1,16 @@
+{
+  "cache_key": "4e48bc54d8fbf61aeb1d26bf8a2373c7aa7dfdc0580054f0a07715d2185f433d",
+  "file_path": ".teamcache/objects/summaries/fe/feedc320ff3d_v1.json",
+  "file_hash": "bdc31afafae52ffc758a37719a3fd4bc861868118025237234f68565cd4b6a85",
+  "schema_version": "vs1",
+  "language": "json",
+  "symbols": {
+    "functions": [],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:44:24.089129Z",
+  "created_by": "unknown"
+}

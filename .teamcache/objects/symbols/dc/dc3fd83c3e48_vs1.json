@@ -1,0 +1,16 @@
+{
+  "cache_key": "dc3fd83c3e480454e6b43f104e9bac34b36c8b0cce70ba401cbb80b0dec922dc",
+  "file_path": "gemini-extension.json",
+  "file_hash": "98e3cf2eb69c402ef65af7bb4a37c730ec71cdfe3fc2bb4a4b6eb1c12ed44495",
+  "schema_version": "vs1",
+  "language": "json",
+  "symbols": {
+    "functions": [],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "outgoing_calls": [],
+  "created_at": "2026-06-04T16:45:21.624586Z",
+  "created_by": "unknown"
+}
