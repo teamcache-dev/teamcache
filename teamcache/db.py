@@ -10,6 +10,54 @@ from typing import Any
 from .search import normalize_fts_query
 
 
+MIGRATIONS: list[tuple[int, str, str]] = [
+    (1, "ALTER TABLE summaries ADD COLUMN last_accessed_at TEXT", "add last_accessed_at column"),
+    (2, "ALTER TABLE summaries ADD COLUMN git_commit TEXT", "add git_commit column"),
+    (3, """CREATE TABLE IF NOT EXISTS daily_stats (
+      date TEXT PRIMARY KEY,
+      ai_count INTEGER DEFAULT 0,
+      static_count INTEGER DEFAULT 0,
+      hit_count INTEGER DEFAULT 0,
+      miss_count INTEGER DEFAULT 0
+  )""", "add daily_stats table"),
+    (4, """CREATE TABLE IF NOT EXISTS audit_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_type TEXT NOT NULL,
+      cache_key TEXT,
+      file_path TEXT,
+      created_by TEXT,
+      summary_type TEXT,
+      occurred_at TEXT NOT NULL
+  )""", "add audit_log table"),
+    (5, "ALTER TABLE summaries ADD COLUMN quality_score REAL DEFAULT 0.5", "add quality_score column"),
+]
+
+
+def _run_migrations(conn: sqlite3.Connection) -> list[int]:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS schema_migrations (
+            version INTEGER PRIMARY KEY,
+            applied_at TEXT NOT NULL
+        )
+        """
+    )
+    conn.commit()
+    applied = {row[0] for row in conn.execute("SELECT version FROM schema_migrations")}
+    ran: list[int] = []
+    for version, sql, _description in MIGRATIONS:
+        if version in applied:
+            continue
+        conn.execute(sql)
+        conn.execute(
+            "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)",
+            (version, datetime.utcnow().isoformat() + "Z"),
+        )
+        conn.commit()
+        ran.append(version)
+    return ran
+
+
 def connect(db_path: Path) -> sqlite3.Connection:
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(db_path, check_same_thread=False)
@@ -85,18 +133,17 @@ def connect(db_path: Path) -> sqlite3.Connection:
         "CREATE INDEX IF NOT EXISTS idx_symbols_file_path ON symbols(file_path)"
     )
     conn.commit()
-    _migrate_add_last_accessed(conn)
+    _run_migrations(conn)
     return conn
 
 
-def _migrate_add_last_accessed(conn: sqlite3.Connection) -> None:
-    cols = {row["name"] for row in conn.execute("PRAGMA table_info(summaries)")}
-    if "last_accessed_at" not in cols:
-        conn.execute("ALTER TABLE summaries ADD COLUMN last_accessed_at TEXT")
-        conn.commit()
-    if "git_commit" not in cols:
-        conn.execute("ALTER TABLE summaries ADD COLUMN git_commit TEXT")
-        conn.commit()
+def compute_quality_score(summary: str, file_size_bytes: int) -> float:
+    words = summary.split()
+    word_count = len(words)
+    length_score = min(word_count / 100, 1.0)
+    cap_ratio = sum(1 for w in words if w and w[0].isupper()) / max(word_count, 1)
+    specificity_score = min(cap_ratio * 2, 1.0)
+    return round(0.5 * length_score + 0.5 * specificity_score, 3)
 
 
 def insert_summary(conn: sqlite3.Connection, obj: dict[str, Any], commit: bool = True) -> None:
@@ -104,6 +151,7 @@ def insert_summary(conn: sqlite3.Connection, obj: dict[str, Any], commit: bool =
     if existing and existing["summary_type"] == "ai" and obj["summary_type"] == "static":
         return
 
+    quality_score = compute_quality_score(obj["summary"], obj.get("file_size_bytes") or 0)
     conn.execute(
         """
         INSERT INTO summaries (
@@ -117,8 +165,9 @@ def insert_summary(conn: sqlite3.Connection, obj: dict[str, Any], commit: bool =
             created_by,
             file_size_bytes,
             schema_version,
-            last_accessed_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
+            last_accessed_at,
+            quality_score
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)
         ON CONFLICT(cache_key) DO UPDATE SET
             file_path = excluded.file_path,
             file_hash = excluded.file_hash,
@@ -128,7 +177,8 @@ def insert_summary(conn: sqlite3.Connection, obj: dict[str, Any], commit: bool =
             created_at = excluded.created_at,
             created_by = excluded.created_by,
             file_size_bytes = excluded.file_size_bytes,
-            schema_version = excluded.schema_version
+            schema_version = excluded.schema_version,
+            quality_score = excluded.quality_score
         """,
         (
             obj["cache_key"],
@@ -141,6 +191,7 @@ def insert_summary(conn: sqlite3.Connection, obj: dict[str, Any], commit: bool =
             obj.get("created_by"),
             obj.get("file_size_bytes"),
             obj.get("schema_version"),
+            quality_score,
         ),
     )
     row = conn.execute(
@@ -390,7 +441,11 @@ def rebuild_symbols(conn: sqlite3.Connection, symbols_root: Path) -> int:
 
 def invalidate_by_path(conn: sqlite3.Connection, file_path: str) -> None:
     summary_rows = conn.execute(
-        "SELECT rowid FROM summaries WHERE file_path = ?",
+        """
+        SELECT rowid, cache_key, file_path, created_by, summary_type
+        FROM summaries
+        WHERE file_path = ?
+        """,
         (file_path,),
     ).fetchall()
     symbol_rows = conn.execute(
@@ -398,6 +453,15 @@ def invalidate_by_path(conn: sqlite3.Connection, file_path: str) -> None:
         (file_path,),
     ).fetchall()
     for row in summary_rows:
+        write_audit_event(
+            conn,
+            "evict",
+            row["cache_key"],
+            row["file_path"],
+            row["created_by"],
+            row["summary_type"],
+            commit=False,
+        )
         conn.execute("DELETE FROM fts_summaries WHERE rowid = ?", (row["rowid"],))
     for row in symbol_rows:
         conn.execute("DELETE FROM fts_symbols WHERE rowid = ?", (row["rowid"],))
@@ -407,16 +471,24 @@ def invalidate_by_path(conn: sqlite3.Connection, file_path: str) -> None:
 
 
 def invalidate_stale(conn: sqlite3.Connection, days: int = 30) -> int:
-    cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
     summary_rows = conn.execute(
         """
-        SELECT rowid, cache_key FROM summaries
-        WHERE (last_accessed_at IS NULL AND created_at < ?) OR last_accessed_at < ?
+        SELECT rowid, cache_key, file_path, created_by, summary_type FROM summaries
+        WHERE (julianday('now') - julianday(COALESCE(last_accessed_at, created_at))) > ?
         """,
-        (cutoff, cutoff),
+        (days,),
     ).fetchall()
     with conn:
         for row in summary_rows:
+            write_audit_event(
+                conn,
+                "evict",
+                row["cache_key"],
+                row["file_path"],
+                row["created_by"],
+                row["summary_type"],
+                commit=False,
+            )
             conn.execute("DELETE FROM fts_summaries WHERE rowid = ?", (row["rowid"],))
             symbol_row = conn.execute(
                 "SELECT rowid FROM symbols WHERE cache_key = ?",
@@ -442,11 +514,24 @@ def invalidate_stale(conn: sqlite3.Connection, days: int = 30) -> int:
 
 
 def invalidate_all(conn: sqlite3.Connection) -> None:
-    conn.execute("DELETE FROM fts_summaries")
-    conn.execute("DELETE FROM fts_symbols")
-    conn.execute("DELETE FROM summaries")
-    conn.execute("DELETE FROM symbols")
-    conn.commit()
+    summary_rows = conn.execute(
+        "SELECT cache_key, file_path, created_by, summary_type FROM summaries"
+    ).fetchall()
+    with conn:
+        for row in summary_rows:
+            write_audit_event(
+                conn,
+                "evict",
+                row["cache_key"],
+                row["file_path"],
+                row["created_by"],
+                row["summary_type"],
+                commit=False,
+            )
+        conn.execute("DELETE FROM fts_summaries")
+        conn.execute("DELETE FROM fts_symbols")
+        conn.execute("DELETE FROM summaries")
+        conn.execute("DELETE FROM symbols")
 
 
 def summary_count(conn: sqlite3.Connection) -> int:
@@ -502,6 +587,98 @@ def static_only_files(conn: sqlite3.Connection, limit: int = 5) -> list[str]:
         (limit,),
     ).fetchall()
     return [row["file_path"] for row in rows]
+
+
+def record_cache_event(conn: sqlite3.Connection, event_type: str) -> None:
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    conn.execute("INSERT OR IGNORE INTO daily_stats (date) VALUES (?)", (today,))
+    if event_type == "hit":
+        conn.execute(
+            "UPDATE daily_stats SET hit_count = hit_count + 1 WHERE date = ?", (today,)
+        )
+    else:
+        conn.execute(
+            "UPDATE daily_stats SET miss_count = miss_count + 1 WHERE date = ?", (today,)
+        )
+    conn.commit()
+
+
+def write_audit_event(
+    conn: sqlite3.Connection,
+    event_type: str,
+    cache_key: str | None,
+    file_path: str | None,
+    created_by: str | None,
+    summary_type: str | None,
+    commit: bool = True,
+) -> None:
+    conn.execute(
+        """
+        INSERT INTO audit_log (
+            event_type,
+            cache_key,
+            file_path,
+            created_by,
+            summary_type,
+            occurred_at
+        ) VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            event_type,
+            cache_key,
+            file_path,
+            created_by,
+            summary_type,
+            datetime.utcnow().isoformat() + "Z",
+        ),
+    )
+    if commit:
+        conn.commit()
+
+
+def metrics_summary(conn: sqlite3.Connection, since: str | None = None) -> dict[str, Any]:
+    cov = coverage_stats(conn)
+    total_files = cov["indexed"]
+    ai_coverage_pct = round(cov["ai"] / total_files * 100, 1) if total_files else 0.0
+    static_coverage_pct = round(cov["static"] / total_files * 100, 1) if total_files else 0.0
+
+    stale_cutoff = (datetime.utcnow() - timedelta(days=14)).isoformat() + "Z"
+    stale_count = conn.execute(
+        """
+        SELECT COUNT(*) FROM summaries
+        WHERE (last_accessed_at IS NULL OR last_accessed_at < ?)
+        """,
+        (stale_cutoff,),
+    ).fetchone()[0]
+
+    est_tokens_row = conn.execute(
+        """
+        SELECT SUM(file_size_bytes) FROM summaries
+        WHERE summary_type = 'ai' AND file_size_bytes IS NOT NULL
+        """
+    ).fetchone()
+    estimated_tokens_saved = int((est_tokens_row[0] or 0) * 0.25)
+
+    daily_query = """
+        SELECT date, hit_count, miss_count
+        FROM daily_stats
+        ORDER BY date DESC
+        LIMIT 30
+    """
+    daily_hits = [
+        {"date": row["date"], "hit_count": row["hit_count"], "miss_count": row["miss_count"]}
+        for row in conn.execute(daily_query).fetchall()
+    ]
+
+    return {
+        "ai_coverage_pct": ai_coverage_pct,
+        "static_coverage_pct": static_coverage_pct,
+        "total_files": total_files,
+        "top_contributors": top_contributors(conn),
+        "stale_count": stale_count,
+        "estimated_tokens_saved": estimated_tokens_saved,
+        "daily_hits": daily_hits,
+    }
 
 
 def _symbol_row_to_dict(row: sqlite3.Row) -> dict[str, Any]:

@@ -58,7 +58,7 @@ That's it. Your AI tool now calls `get_file_context()` before reading any file a
 
 | Command | What it does |
 |---|---|
-| `teamcache init` | Initialize in the current git repo |
+| `teamcache init [--enable-hooks]` | Initialize in the current git repo; optionally install post-merge hook |
 | `teamcache index` | Parse all files, build static summaries |
 | `teamcache install [--agent NAME] [--dry-run] [--print-diff]` | Register MCP server with your AI tool |
 | `teamcache serve` | Start the MCP stdio server (called by AI tool) |
@@ -66,9 +66,14 @@ That's it. Your AI tool now calls `get_file_context()` before reading any file a
 | `teamcache sync` | Rebuild local index from committed objects |
 | `teamcache invalidate [PATH\|--stale\|--all]` | Mark entries as needing refresh |
 | `teamcache stats` | Show AI vs static coverage, top contributors |
+| `teamcache metrics [--format json] [--since DATE]` | Cache performance metrics |
 | `teamcache report` | Write `.teamcache/reports/YYYY-MM.md` |
 | `teamcache commit` | `git add .teamcache/objects/ && git commit` |
 | `teamcache uninstall [--agent NAME] [--dry-run] [--print-diff]` | Remove MCP registration and instructions |
+| `teamcache doctor` | Health check: git identity, hook, binary path, DB integrity |
+| `teamcache migrate` | Apply pending SQLite schema migrations |
+| `teamcache migrate-hooks` | Remove legacy `--amend` lines from old post-commit hook |
+| `teamcache merge-driver %O %A %B` | Git merge driver for `.teamcache/objects/` — wires up in `.gitattributes` |
 
 ## MCP tools
 
@@ -76,25 +81,27 @@ Your AI tool gets these tools via the MCP server:
 
 | Tool | What it does |
 |---|---|
-| `repo_overview()` | Directory tree, languages, entry points, coverage |
-| `get_file_context(path)` | Returns AI or static summary; tells AI what to do |
+| `repo_overview()` | Directory tree, languages, entry points, coverage (60 s cached) |
+| `get_file_context(path)` | Returns AI or static summary, confidence tier, quality score; tells AI what to do next |
 | `cache_summary(path, summary, lang)` | AI writes its understanding back into the cache |
-| `find_relevant_files(task)` | Semantic + keyword search across all summaries |
+| `find_relevant_files(task)` | Semantic + keyword search across all summaries, ranked by quality score |
 | `get_symbols(path)` | Functions, classes, imports for a file |
 | `find_by_symbol(name)` | Where is `UserService` defined? Line number included. |
-| `get_changed_context(branch)` | What changed since main, which need AI re-read |
+| `get_changed_context(branch)` | What changed since main, which need AI re-read, with last-modified timestamps |
+| `get_dependents(path)` | Which files import a given file (from the cross-file import map) |
+| `get_audit_log(path?, limit?)` | Recent `cache_summary` write and eviction history |
 
 ## Architecture
 
 ```
 .teamcache/
-  objects/          ← git committed — shared with team
-    summaries/      ← AI and static summary objects (immutable JSON)
-    symbols/        ← tree-sitter symbol index objects
-    repomap.json    ← cross-file import map
-  config.yaml       ← schema_version: v1 (nothing else)
-  local/            ← gitignored — rebuilt locally
-    index.sqlite    ← fast lookup index
+  objects/            ← git committed — shared with team
+    summaries/        ← AI and static summary objects (immutable JSON)
+    symbols/          ← tree-sitter symbol index objects
+    repomap.json      ← cross-file import map
+  config.yaml         ← schema_version, scope_paths, objects_backend, and other settings
+  local/              ← gitignored — rebuilt locally
+    index.sqlite      ← fast lookup index (WAL mode)
     embeddings.sqlite ← semantic search vectors
 ```
 
@@ -104,6 +111,10 @@ File changes → new key → old object ignored automatically.
 **Two-tier summaries:**
 - `static` — tree-sitter parse, runs in milliseconds, no AI, available from day one
 - `ai` — written by the AI tool after it reads a file, much richer, preferred when available
+
+**Quality score:** every summary gets a `quality_score` (0–1) computed from word count and specificity. `find_relevant_files` ranks results by this score so richer summaries surface first.
+
+**Scope paths:** set `scope_paths` in `.teamcache/config.yaml` to restrict indexing and search to specific directory prefixes — useful for monorepos where a team only owns part of the tree.
 
 **No external calls for core indexing.** The AI tool already running writes summaries via `cache_summary()`. teamcache never calls any AI API. No API key. No separate cost. Semantic search (optional, disabled by default) downloads an ~80 MB embedding model from HuggingFace on first use.
 

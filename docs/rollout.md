@@ -436,3 +436,25 @@ Run `teamcache migrate-hooks` to clear the warning on future `init` calls.
 4. Notify teammates to pull and run `pip install --upgrade teamcache` locally. They do not need to run `migrate-hooks` again once the hook file is updated in the repository.
 
 5. Optionally re-run `teamcache init --enable-hooks` to install the updated post-merge hook if it was not present in the v0.1.x installation.
+
+---
+
+## 6. Concurrent Writes
+
+When two developers commit AI summaries for the same file at the same time, a standard `git merge` will mark the object as a conflict. The `teamcache merge-driver` command resolves these conflicts automatically using preference logic: an AI summary beats a static one, and a longer AI summary beats a shorter one.
+
+### Register the merge driver
+
+Run once per developer machine (or add to your repo's setup documentation):
+
+```bash
+git config merge.teamcache-json.driver 'teamcache merge-driver %O %A %B'
+```
+
+The `.gitattributes` file already present in the repository tells git which files to route through this driver:
+
+```
+.teamcache/objects/**/*.json merge=teamcache-json
+```
+
+With this in place, concurrent summary writes on the same file resolve silently during `git merge` or `git pull` without leaving conflict markers in the cache objects.

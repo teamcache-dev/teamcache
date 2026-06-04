@@ -22,6 +22,7 @@ from .constants import (
     INDEX_DB,
     LANGUAGE_BY_SUFFIX,
     LOCAL_DIR,
+    SCHEMA_VERSION,
     SUMMARIES_DIR,
     SYMBOLS_DIR,
 )
@@ -35,9 +36,11 @@ from .db import (
     invalidate_all,
     invalidate_by_path,
     invalidate_stale,
+    metrics_summary,
     optimize_fts,
     rebuild_from_objects,
     rebuild_symbols,
+    _run_migrations,
     static_only_files,
     summary_count,
     symbol_count,
@@ -51,9 +54,9 @@ from .files import (
     is_binary_content,
     iter_repo_files,
     should_skip_metadata,
-    write_summary_object,
 )
-from .symbols import extract_symbols, summary_from_symbols, write_symbol_object
+from .store import make_store
+from .symbols import extract_symbols, summary_from_symbols
 
 console = Console()
 
@@ -134,6 +137,7 @@ def migrate_hooks() -> None:
 def index() -> None:
     root = find_repo_root(Path.cwd())
     config = load_config(root)
+    store = make_store(config, root)
     conn = connect(root / INDEX_DB)
     emb_conn = connect_embeddings(root / EMBEDDINGS_DB)
     indexed = 0
@@ -144,10 +148,13 @@ def index() -> None:
         rebuild_from_objects(conn, root / SUMMARIES_DIR)
         rebuild_symbols(conn, root / SYMBOLS_DIR)
         files = list(iter_repo_files(root))
+        if config.scope_paths:
+            files = [f for f in files if any(str(f.relative_to(root)).startswith(p) for p in config.scope_paths)]
+            console.print(f"Scoped to: {config.scope_paths}")
         created_by = git_user_email(root)
         for path in track(files, description="Indexing"):
             try:
-                result = _index_file(root, config.schema_version, conn, emb_conn, path, created_by)
+                result = _index_file(root, config.schema_version, conn, emb_conn, path, created_by, store)
                 if result is None:
                     skipped += 1
                     continue
@@ -173,6 +180,7 @@ def index() -> None:
 def changed(since_branch: str) -> None:
     root = find_repo_root(Path.cwd())
     config = load_config(root)
+    store = make_store(config, root)
     try:
         result = subprocess.run(
             ["git", "diff", "--name-only", f"{since_branch}...HEAD"],
@@ -203,7 +211,7 @@ def changed(since_branch: str) -> None:
             changed_count += 1
             rel_path = path.relative_to(repo_resolved).as_posix()
             invalidate_by_path(conn, rel_path)
-            index_result = _index_file(root, config.schema_version, conn, emb_conn, path, created_by)
+            index_result = _index_file(root, config.schema_version, conn, emb_conn, path, created_by, store)
             if index_result and not index_result["skipped"]:
                 refreshed += 1
         optimize_fts(conn)
@@ -319,6 +327,48 @@ def stats() -> None:
             lines.append(f"  {path}  (static only)")
 
     console.print(Panel("\n".join(lines), title="TeamCache Stats", border_style="blue"))
+
+
+@cli.command()
+@click.option("--format", "fmt", default="table", type=click.Choice(["table", "json"]), show_default=True)
+@click.option("--since", default=None, metavar="DATE", help="Filter metrics since DATE (YYYY-MM-DD).")
+def metrics(fmt: str, since: str | None) -> None:
+    """Show cache performance metrics."""
+    from rich.panel import Panel
+
+    root = find_repo_root(Path.cwd())
+    conn = connect(root / INDEX_DB)
+    try:
+        data = metrics_summary(conn, since=since)
+    finally:
+        conn.close()
+
+    if fmt == "json":
+        click.echo(json.dumps(data, indent=2))
+        return
+
+    def pct(v: float) -> str:
+        return f"{v:.1f}%"
+
+    lines = [
+        f"AI coverage:           {pct(data['ai_coverage_pct']):>8}",
+        f"Static coverage:       {pct(data['static_coverage_pct']):>8}",
+        f"Total indexed files:   {data['total_files']:>8,}",
+        f"Stale entries (14d):   {data['stale_count']:>8,}",
+        f"Est. tokens saved:     {data['estimated_tokens_saved']:>8,}",
+    ]
+    if data["top_contributors"]:
+        lines += ["", "Top contributors (AI summaries):"]
+        for c in data["top_contributors"]:
+            lines.append(f"  {c['email']:<35} → {c['count']:,} objects")
+    if data["daily_hits"]:
+        lines += ["", "Daily hits/misses (last 30 days):"]
+        for entry in data["daily_hits"]:
+            lines.append(
+                f"  {entry['date']}  hits: {entry['hit_count']:>5,}  misses: {entry['miss_count']:>5,}"
+            )
+
+    console.print(Panel("\n".join(lines), title="TeamCache Metrics", border_style="cyan"))
 
 
 @cli.command()
@@ -440,6 +490,239 @@ def serve() -> None:
     from .mcp_server import run_server
 
     run_server()
+
+
+@cli.command()
+def migrate() -> None:
+    """Apply pending database migrations to the local index."""
+    root = find_repo_root(Path.cwd())
+    conn = connect(root / INDEX_DB)
+    try:
+        ran = _run_migrations(conn)
+    finally:
+        conn.close()
+    if ran:
+        console.print(f"Applied {len(ran)} migration(s): {ran}")
+    else:
+        console.print("No pending migrations.")
+
+
+@cli.command("merge-driver")
+@click.argument("base", type=click.Path(exists=True))
+@click.argument("ours", type=click.Path(exists=True))
+@click.argument("theirs", type=click.Path(exists=True))
+def merge_driver(base: str, ours: str, theirs: str) -> None:
+    """Git merge driver for .teamcache/objects JSON files.
+
+    Called by git as: teamcache merge-driver %O %A %B
+    Writes the winning object to OURS (the file git uses as the result).
+    Exits 0 on success, 1 on unresolvable error.
+    """
+    try:
+        base_obj = json.loads(Path(base).read_text(encoding="utf-8"))
+        ours_obj = json.loads(Path(ours).read_text(encoding="utf-8"))
+        theirs_obj = json.loads(Path(theirs).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        console.print(f"[red]error:[/red] failed to read merge inputs: {escape(str(exc))}")
+        raise SystemExit(1)
+
+    winner = _pick_summary_winner(ours_obj, theirs_obj)
+    try:
+        _atomic_write_text(Path(ours), json.dumps(winner, indent=2) + "\n")
+    except OSError as exc:
+        console.print(f"[red]error:[/red] failed to write merge result: {escape(str(exc))}")
+        raise SystemExit(1)
+
+
+@cli.command()
+def doctor() -> None:
+    """Check local TeamCache setup health."""
+    import shlex
+    import sqlite3
+
+    root = find_repo_root(Path.cwd())
+    results: list[tuple[str, str, str, str | None]] = []
+
+    def add(status: str, name: str, detail: str, fix: str | None = None) -> None:
+        results.append((status, name, detail, fix))
+
+    # CHECK 1 — git identity
+    try:
+        email_result = subprocess.run(
+            ["git", "config", "user.email"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        email = email_result.stdout.strip()
+    except OSError:
+        email = ""
+    if email:
+        add("PASS", "git identity", email)
+    else:
+        add(
+            "FAIL",
+            "git identity",
+            "git user.email is not configured",
+            "Run: git config --global user.email 'you@example.com'",
+        )
+
+    hook_path = root / ".githooks" / "post-merge"
+    hook_content = ""
+    if hook_path.exists():
+        hook_content = hook_path.read_text(encoding="utf-8", errors="replace")
+
+    # CHECK 2 — post-merge hook installed
+    if hook_path.exists() and "teamcache sync" in hook_content:
+        add("PASS", "post-merge hook installed", ".githooks/post-merge contains teamcache sync")
+    else:
+        add(
+            "WARN",
+            "post-merge hook installed",
+            ".githooks/post-merge is not installed or does not run teamcache sync",
+            "Run: teamcache init --enable-hooks",
+        )
+
+    # CHECK 3 — hook binary path valid
+    teamcache_bin = ""
+    for line in hook_content.splitlines():
+        if "teamcache" not in line or "sync" not in line:
+            continue
+        try:
+            tokens = shlex.split(line)
+        except ValueError:
+            tokens = line.split()
+        if "sync" in tokens:
+            sync_index = tokens.index("sync")
+            if sync_index > 0:
+                teamcache_bin = tokens[sync_index - 1]
+                break
+        for token in tokens:
+            if Path(token).name.startswith("teamcache"):
+                teamcache_bin = token
+                break
+        if teamcache_bin:
+            break
+    resolved_bin = Path(teamcache_bin).expanduser() if teamcache_bin else None
+    binary_exists = False
+    if resolved_bin and resolved_bin.exists():
+        binary_exists = True
+    elif teamcache_bin and shutil.which(teamcache_bin):
+        binary_exists = True
+    if binary_exists:
+        add("PASS", "hook binary path valid", teamcache_bin)
+    else:
+        add(
+            "FAIL",
+            "hook binary path valid",
+            "teamcache binary referenced by .githooks/post-merge was not found",
+            "Run: teamcache init --enable-hooks to reinstall",
+        )
+
+    # CHECK 4 — v1 objects present when schema is v2
+    v1_schema_objects = 0
+    if SCHEMA_VERSION == "v2":
+        for path in (root / SUMMARIES_DIR).glob("**/*_v1.json"):
+            try:
+                obj = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            if obj.get("schema_version") == "v1":
+                v1_schema_objects += 1
+    if v1_schema_objects:
+        add(
+            "WARN",
+            "v1 objects present when schema is v2",
+            f"{v1_schema_objects} v1 summary object(s) found",
+            "Run: teamcache migrate",
+        )
+    else:
+        add("PASS", "v1 objects present when schema is v2", "no stale v1 summary objects found")
+
+    # CHECK 5 — embeddings DB healthy
+    embeddings_path = root / EMBEDDINGS_DB
+    if embeddings_path.exists():
+        try:
+            emb_conn = sqlite3.connect(embeddings_path)
+            try:
+                count = emb_conn.execute("SELECT COUNT(*) FROM embeddings").fetchone()[0]
+            finally:
+                emb_conn.close()
+            add("PASS", "embeddings DB healthy", f"{count} embeddings")
+        except (OSError, sqlite3.DatabaseError):
+            add(
+                "WARN",
+                "embeddings DB healthy",
+                ".teamcache/local/embeddings.sqlite could not be read",
+                "Delete .teamcache/local/embeddings.sqlite and run teamcache sync",
+            )
+    else:
+        add("PASS", "embeddings DB healthy", "embeddings DB does not exist")
+
+    # CHECK 6 — index DB healthy
+    index_path = root / INDEX_DB
+    if index_path.exists():
+        try:
+            index_conn = sqlite3.connect(index_path)
+            try:
+                count = index_conn.execute("SELECT COUNT(*) FROM summaries").fetchone()[0]
+            finally:
+                index_conn.close()
+            add("PASS", "index DB healthy", f"{count} summaries")
+        except (OSError, sqlite3.DatabaseError):
+            add(
+                "WARN",
+                "index DB healthy",
+                ".teamcache/local/index.sqlite could not be read",
+                "Delete .teamcache/local/index.sqlite and run teamcache sync",
+            )
+    else:
+        add(
+            "WARN",
+            "index DB healthy",
+            ".teamcache/local/index.sqlite does not exist",
+            "Run: teamcache sync",
+        )
+
+    status_markup = {
+        "PASS": "[green]PASS[/green]",
+        "WARN": "[yellow]WARN[/yellow]",
+        "FAIL": "[red]FAIL[/red]",
+    }
+    passed = 0
+    for status, name, detail, fix in results:
+        if status == "PASS":
+            passed += 1
+        console.print(f"{status_markup[status]} {name}: {escape(detail)}")
+        if fix:
+            console.print(f"  Fix: {escape(fix)}")
+    console.print(f"{passed}/6 checks passed")
+
+
+def _pick_summary_winner(
+    a: dict[str, object],
+    b: dict[str, object],
+) -> dict[str, object]:
+    """Return the preferred summary object between two candidates.
+
+    Preference order:
+    1. ai beats static
+    2. longer ai summary beats shorter ai summary
+    3. otherwise keep a (ours)
+    """
+    a_type = a.get("summary_type", "static")
+    b_type = b.get("summary_type", "static")
+
+    if a_type == "ai" and b_type != "ai":
+        return a
+    if b_type == "ai" and a_type != "ai":
+        return b
+    if a_type == "ai" and b_type == "ai":
+        a_len = len(str(a.get("summary", "")))
+        b_len = len(str(b.get("summary", "")))
+        return a if a_len >= b_len else b
+    return a
 
 
 _SUPPORTED_AGENTS = ("claude", "codex", "cursor", "opencode", "aider", "windsurf")
@@ -928,6 +1211,7 @@ def _index_file(
     emb_conn,
     path: Path,
     created_by: str,
+    store,
 ) -> dict[str, object] | None:
     if should_skip_metadata(path):
         return None
@@ -949,7 +1233,7 @@ def _index_file(
         return {"skipped": True}
 
     text = content.decode("utf-8", errors="ignore")
-    disk_symbol_obj = _read_symbol_object(root / SYMBOLS_DIR, key)
+    disk_symbol_obj = store.read_symbol(key)
     symbols = (
         disk_symbol_obj.get("symbols", {})
         if isinstance(disk_symbol_obj, dict)
@@ -959,7 +1243,7 @@ def _index_file(
         symbols = extract_symbols(path, language, text)
     summary = summary_from_symbols(symbols, language)
     created_at = datetime.utcnow().isoformat() + "Z"
-    disk_summary_obj = _read_summary_object(root / SUMMARIES_DIR, key)
+    disk_summary_obj = store.read(key)
     summary_obj = _summary_object_for_path(
         disk_summary_obj,
         rel_path,
@@ -990,7 +1274,7 @@ def _index_file(
     }
     if summary_needs_upsert:
         if disk_summary_obj is None:
-            write_summary_object(root / SUMMARIES_DIR, key, summary_obj)
+            store.write(key, summary_obj)
         insert_summary(conn, summary_obj)
         upsert_embedding(
             emb_conn,
@@ -1001,41 +1285,13 @@ def _index_file(
         )
     if symbol_needs_upsert:
         if disk_symbol_obj is None:
-            write_symbol_object(root / SYMBOLS_DIR, key, symbol_obj)
+            store.write_symbol(key, symbol_obj)
         insert_symbol(conn, symbol_obj)
     return {
         "skipped": False,
         "language": language,
         "symbol_obj": symbol_obj,
     }
-
-
-def _read_summary_object(summaries_root: Path, key: str) -> dict[str, object] | None:
-    path = summaries_root / key[:2] / f"{key[:12]}_v1.json"
-    if not path.exists():
-        return None
-    try:
-        obj = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:  # noqa: BLE001 - malformed cache object should be replaced by a fresh static one.
-        return None
-    if not isinstance(obj, dict):
-        return None
-    required = {"cache_key", "file_path", "file_hash", "summary", "summary_type"}
-    return obj if required.issubset(obj) else None
-
-
-def _read_symbol_object(symbols_root: Path, key: str) -> dict[str, object] | None:
-    path = symbols_root / key[:2] / f"{key[:12]}_v1.json"
-    if not path.exists():
-        return None
-    try:
-        obj = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:  # noqa: BLE001 - malformed cache object should be replaced by a fresh symbol one.
-        return None
-    if not isinstance(obj, dict):
-        return None
-    required = {"cache_key", "file_path", "file_hash", "symbols"}
-    return obj if required.issubset(obj) and isinstance(obj.get("symbols"), dict) else None
 
 
 def _summary_object_for_path(
@@ -1096,6 +1352,23 @@ def _write_repomap(root: Path) -> None:
             for item in symbols.get(group_name, []):
                 if isinstance(item, dict) and item.get("name"):
                     definition_locations.setdefault(str(item["name"]), (file_path, language))
+    reverse_imports: dict[str, list[str]] = {}
+    for obj in symbol_objects:
+        symbols = obj.get("symbols", {})
+        if not isinstance(symbols, dict):
+            continue
+        importer = str(obj.get("file_path", ""))
+        if not importer:
+            continue
+        for import_name in symbols.get("imports", []):
+            for lookup_key in _import_lookup_keys(str(import_name)):
+                resolved_path, _ = definition_locations.get(lookup_key, ("", ""))
+                if resolved_path and resolved_path != importer:
+                    reverse_imports.setdefault(resolved_path, [])
+                    if importer not in reverse_imports[resolved_path]:
+                        reverse_imports[resolved_path].append(importer)
+                    break
+
     top_symbols = []
     for name, _count in imports.most_common(50):
         file_path = ""
@@ -1115,6 +1388,7 @@ def _write_repomap(root: Path) -> None:
         "languages": dict(sorted(language_counts.items())),
         "entry_points": sorted(entry for entry in ENTRY_POINTS if (root / entry).exists()),
         "top_symbols": top_symbols,
+        "reverse_imports": reverse_imports,
     }
     _atomic_write_text(
         root / ".teamcache" / "objects" / "repomap.json",

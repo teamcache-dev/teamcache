@@ -34,6 +34,14 @@ def extract_symbols(path: Path, language: str, text: str) -> dict[str, Any]:
         _extract_java(root, source, symbols)
     elif language == "rust":
         _extract_rust(root, source, symbols)
+    elif language == "csharp":
+        _extract_csharp(root, source, symbols)
+    elif language == "ruby":
+        _extract_ruby(root, source, symbols)
+    elif language == "kotlin":
+        _extract_kotlin(root, source, symbols)
+    elif language == "php":
+        _extract_php(root, source, symbols)
     else:
         return _fallback_symbols(path, language, text)
     return _dedupe_symbols(symbols)
@@ -65,7 +73,18 @@ def _empty_symbols() -> dict[str, Any]:
 def _get_parser(language: str) -> Any | None:
     if language in _PARSERS:
         return _PARSERS[language]
-    if language not in {"python", "javascript", "typescript", "go", "java", "rust"}:
+    if language not in {
+        "python",
+        "javascript",
+        "typescript",
+        "go",
+        "java",
+        "rust",
+        "csharp",
+        "ruby",
+        "kotlin",
+        "php",
+    }:
         return None
     try:
         from tree_sitter import Language, Parser
@@ -79,11 +98,17 @@ def _get_parser(language: str) -> Any | None:
         "go": ("tree_sitter_go", "go"),
         "java": ("tree_sitter_java", "java"),
         "rust": ("tree_sitter_rust", "rust"),
+        "csharp": ("tree_sitter_c_sharp", "csharp"),
+        "ruby": ("tree_sitter_ruby", "ruby"),
+        "kotlin": ("tree_sitter_kotlin", "kotlin"),
+        "php": ("tree_sitter_php", "php"),
     }[language]
     try:
         module = __import__(module_name)
         if language == "typescript" and hasattr(module, "language_typescript"):
             grammar = module.language_typescript()
+        elif language == "php" and hasattr(module, "language_php"):
+            grammar = module.language_php()
         elif hasattr(module, "language"):
             grammar = module.language()
         else:
@@ -244,6 +269,81 @@ def _extract_rust(root: Any, source: bytes, symbols: dict[str, Any]) -> None:
                 symbols["imports"].append(use_text)
 
 
+def _extract_csharp(root: Any, source: bytes, symbols: dict[str, Any]) -> None:
+    for node in _walk(root):
+        if node.type == "class_declaration":
+            name = _node_name(node, source)
+            if name:
+                methods = [
+                    {"name": method_name, "line": method.start_point[0] + 1}
+                    for method in _walk(node)
+                    if method.type == "method_declaration"
+                    for method_name in [_node_name(method, source)]
+                    if method_name
+                ]
+                symbols["classes"].append(
+                    {"name": name, "line": node.start_point[0] + 1, "methods": methods}
+                )
+        elif node.type == "using_directive":
+            import_name = _csharp_using_name(node, source)
+            if import_name:
+                symbols["imports"].append(import_name)
+
+
+def _extract_ruby(root: Any, source: bytes, symbols: dict[str, Any]) -> None:
+    for node in _walk(root):
+        if node.type == "class":
+            name = _node_name(node, source)
+            if name:
+                symbols["classes"].append(
+                    {"name": name, "line": node.start_point[0] + 1, "methods": []}
+                )
+        elif node.type == "method":
+            name = _node_name(node, source)
+            if name:
+                symbols["functions"].append(_function_obj(name, node, source))
+        elif node.type == "call":
+            import_name = _ruby_require_name(node, source)
+            if import_name:
+                symbols["imports"].append(import_name)
+
+
+def _extract_kotlin(root: Any, source: bytes, symbols: dict[str, Any]) -> None:
+    for node in _walk(root):
+        if node.type in {"class_declaration", "object_declaration"}:
+            name = _node_name(node, source)
+            if name:
+                symbols["classes"].append(
+                    {"name": name, "line": node.start_point[0] + 1, "methods": []}
+                )
+        elif node.type == "function_declaration":
+            name = _node_name(node, source)
+            if name:
+                symbols["functions"].append(_function_obj(name, node, source))
+        elif node.type in {"import_header", "import"}:
+            import_name = _kotlin_import_name(node, source)
+            if import_name:
+                symbols["imports"].append(import_name)
+
+
+def _extract_php(root: Any, source: bytes, symbols: dict[str, Any]) -> None:
+    for node in _walk(root):
+        if node.type in {"class_declaration", "interface_declaration"}:
+            name = _node_name(node, source)
+            if name:
+                symbols["classes"].append(
+                    {"name": name, "line": node.start_point[0] + 1, "methods": []}
+                )
+        elif node.type in {"function_definition", "method_declaration"}:
+            name = _node_name(node, source)
+            if name:
+                symbols["functions"].append(_function_obj(name, node, source))
+        elif node.type == "namespace_use_declaration":
+            import_names = _php_namespace_use_names(node, source)
+            if import_names:
+                symbols["imports"].extend(import_names)
+
+
 def _fallback_symbols(path: Path, language: str, text: str) -> dict[str, Any]:
     summary = static_summary(path, language, text)
     symbols = _empty_symbols()
@@ -278,7 +378,14 @@ def _node_name(node: Any, source: bytes) -> str | None:
         if name:
             return name
     for child in node.children:
-        if child.type in {"identifier", "property_identifier", "type_identifier"}:
+        if child.type in {
+            "identifier",
+            "property_identifier",
+            "type_identifier",
+            "constant",
+            "simple_identifier",
+            "name",
+        }:
             return _text(child, source).strip()
     return None
 
@@ -307,6 +414,36 @@ def _rust_use_name(node: Any, source: bytes) -> str | None:
     text = _text(node, source).strip()
     match = re.match(r"use\s+([^;]+);?", text)
     return match.group(1).strip() if match else None
+
+
+def _csharp_using_name(node: Any, source: bytes) -> str | None:
+    text = _text(node, source).strip()
+    match = re.match(r"using\s+(?:static\s+)?([^;=]+);?", text)
+    return match.group(1).strip() if match else None
+
+
+def _ruby_require_name(node: Any, source: bytes) -> str | None:
+    text = _text(node, source).strip()
+    match = re.match(r"require(?:_relative)?\s*\(?\s*[\"']([^\"']+)[\"']", text)
+    return match.group(1).strip() if match else None
+
+
+def _kotlin_import_name(node: Any, source: bytes) -> str | None:
+    text = _text(node, source).strip()
+    match = re.match(r"import\s+(.+?)(?:\s+as\s+\w+)?$", text)
+    return match.group(1).strip() if match else None
+
+
+def _php_namespace_use_names(node: Any, source: bytes) -> list[str]:
+    text = _text(node, source).strip()
+    text = re.sub(r"^use\s+", "", text)
+    text = text.rstrip(";")
+    imports: list[str] = []
+    for item in text.split(","):
+        cleaned = re.sub(r"\s+as\s+\w+$", "", item.strip(), flags=re.IGNORECASE)
+        if cleaned:
+            imports.append(cleaned)
+    return imports
 
 
 def _go_receiver(node: Any, source: bytes) -> str | None:

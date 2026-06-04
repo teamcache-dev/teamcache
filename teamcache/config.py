@@ -17,6 +17,10 @@ class TeamCacheConfig:
     max_files_for_local_embeddings: int = 5000
     require_source_before_edit: bool = True
     sensitive_path_denylist: list = field(default_factory=list)
+    objects_backend: str = "git"
+    objects_backend_url: str = ""
+    scope_paths: list[str] = field(default_factory=list)
+    # If non-empty, only files under these paths are indexed/served
 
 
 def find_repo_root(start: Path | None = None) -> Path:
@@ -38,6 +42,9 @@ def load_config(repo_root: Path) -> TeamCacheConfig:
         max_files_for_local_embeddings=int(data.get("max_files_for_local_embeddings", 5000)),
         require_source_before_edit=bool(data.get("require_source_before_edit", True)),
         sensitive_path_denylist=list(data.get("sensitive_path_denylist", [])),
+        objects_backend=str(data.get("objects_backend", "git")),
+        objects_backend_url=str(data.get("objects_backend_url", "")),
+        scope_paths=list(data.get("scope_paths", [])),
     )
 
 
@@ -53,6 +60,9 @@ def write_config(repo_root: Path, config: TeamCacheConfig) -> None:
             "max_files_for_local_embeddings": config.max_files_for_local_embeddings,
             "require_source_before_edit": config.require_source_before_edit,
             "sensitive_path_denylist": config.sensitive_path_denylist,
+            "objects_backend": config.objects_backend,
+            "objects_backend_url": config.objects_backend_url,
+            "scope_paths": config.scope_paths,
         },
         sort_keys=False,
     )

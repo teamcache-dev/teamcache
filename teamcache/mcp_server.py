@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import asyncio
+import json
 import os
 import subprocess
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -21,6 +24,7 @@ from .constants import (
     SYMBOLS_DIR,
 )
 from .db import (
+    compute_quality_score,
     connect,
     count_by_type,
     find_symbol_by_name,
@@ -33,32 +37,49 @@ from .db import (
     optimize_fts,
     rebuild_from_objects,
     rebuild_symbols,
+    write_audit_event,
 )
 from .embeddings import connect_embeddings, semantic_search, upsert_embedding
-from .files import cache_key, file_hash, git_user_email, is_sensitive_path, write_summary_object
+from .files import cache_key, file_hash, git_user_email, is_sensitive_path
+from .store import make_store
 from .secrets import contains_secret
+
+MAX_SUMMARY_BYTES = 8192
+MIN_SUMMARY_WORDS = 5
+
+_WRITTEN_THIS_SESSION: set[str] = set()
+_OVERVIEW_CACHE: dict[str, Any] = {}
 
 
 def run_server() -> None:
     repo_root = find_repo_root(Path.cwd())
     repo_resolved = repo_root.resolve()
     config = load_config(repo_root)
-    conn = connect(repo_root / INDEX_DB)
+    store = make_store(config, repo_root)
+    # WAL mode supports concurrent readers alongside one writer; use separate
+    # connections so reads never block on an in-progress write transaction.
+    read_conn = connect(repo_root / INDEX_DB)
+    write_conn = connect(repo_root / INDEX_DB)
     emb_conn = connect_embeddings(repo_root / EMBEDDINGS_DB)
     summaries_root = repo_root / SUMMARIES_DIR
     symbols_root = repo_root / SYMBOLS_DIR
-    db_row_count = conn.execute("SELECT COUNT(*) FROM summaries").fetchone()[0]
+    db_row_count = read_conn.execute("SELECT COUNT(*) FROM summaries").fetchone()[0]
     if db_row_count == 0:
-        rebuild_from_objects(conn, summaries_root)
-        rebuild_symbols(conn, symbols_root)
-        optimize_fts(conn)
+        rebuild_from_objects(write_conn, summaries_root)
+        rebuild_symbols(write_conn, symbols_root)
+        optimize_fts(write_conn)
 
     mcp = FastMCP("teamcache")
 
     @mcp.tool()
     def repo_overview() -> str | dict[str, str]:
         try:
-            return _repo_overview(repo_root, conn)
+            if "data" in _OVERVIEW_CACHE and time.time() - _OVERVIEW_CACHE["ts"] < 60:
+                return _OVERVIEW_CACHE["data"]
+            result = _repo_overview(repo_root, read_conn)
+            _OVERVIEW_CACHE["data"] = result
+            _OVERVIEW_CACHE["ts"] = time.time()
+            return result
         except Exception as exc:  # noqa: BLE001 - MCP tools must report errors as data.
             return {"error": str(exc)}
 
@@ -76,7 +97,7 @@ def run_server() -> None:
                     content = path.read_bytes()
                     fhash = file_hash(content)
                     key = cache_key(fhash, config.schema_version)
-                    obj = get_summary(conn, key)
+                    obj = get_summary(read_conn, key)
                 except OSError:
                     pass
 
@@ -94,6 +115,7 @@ def run_server() -> None:
                         "File may have been moved. Read the file and call cache_summary() to re-index."
                     ),
                     "summary_confidence": "low",
+                    "quality_score": obj.get("quality_score") or compute_quality_score(obj["summary"], obj.get("file_size_bytes") or 0),
                 }
 
             if obj and obj["summary_type"] == "ai":
@@ -111,6 +133,7 @@ def run_server() -> None:
                     "language": language,
                     "note": note,
                     "summary_confidence": confidence,
+                    "quality_score": obj.get("quality_score") or compute_quality_score(obj["summary"], obj.get("file_size_bytes") or 0),
                 }
             if obj and obj["summary_type"] == "static":
                 return {
@@ -120,6 +143,7 @@ def run_server() -> None:
                     "file_path": file_path,
                     "language": language,
                     "note": "Static index only. Read file for full understanding, then call cache_summary().",
+                    "quality_score": obj.get("quality_score") or compute_quality_score(obj["summary"], obj.get("file_size_bytes") or 0),
                 }
             return {
                 "summary": None,
@@ -138,6 +162,12 @@ def run_server() -> None:
             rel, path = _sanitize_path(repo_root, repo_resolved, file_path)
             if rel is None or path is None:
                 return {"stored": False, "error": "path outside repository"}
+
+            summary_bytes = len(summary.encode())
+            if summary_bytes > MAX_SUMMARY_BYTES:
+                return {"stored": False, "error": f"summary too long ({summary_bytes} bytes, max {MAX_SUMMARY_BYTES})"}
+            if len(summary.strip().split()) < MIN_SUMMARY_WORDS:
+                return {"stored": False, "error": "summary too short (minimum 5 words)"}
 
             # P0-C: block sensitive paths (built-in patterns + config denylist)
             if is_sensitive_path(str(rel)):
@@ -159,7 +189,9 @@ def run_server() -> None:
             content = path.read_bytes()
             fhash = file_hash(content)
             key = cache_key(fhash, config.schema_version)
-            existing = get_summary(conn, key)
+            if key in _WRITTEN_THIS_SESSION:
+                return {"stored": False, "reason": "already written this session"}
+            existing = get_summary(read_conn, key)
             if existing and existing["summary_type"] == "ai":
                 return {
                     "stored": False,
@@ -167,6 +199,7 @@ def run_server() -> None:
                     "cache_key": key,
                 }
 
+            created_by = git_user_email(repo_root)
             obj = {
                 "cache_key": key,
                 "file_path": rel,
@@ -175,25 +208,70 @@ def run_server() -> None:
                 "summary_type": "ai",
                 "schema_version": config.schema_version,
                 "created_at": datetime.now(tz=timezone.utc).isoformat().replace("+00:00", "Z"),
-                "created_by": git_user_email(repo_root),
+                "created_by": created_by,
                 "file_size_bytes": len(content),
                 "language": language,
             }
-            write_summary_object(summaries_root, key, obj)
-            insert_summary(conn, obj)
+            store.write(key, obj)
+            insert_summary(write_conn, obj)
             upsert_embedding(emb_conn, key, rel, summary.strip(), "ai")
+            write_audit_event(write_conn, "write", key, rel, created_by, "ai")
+            _WRITTEN_THIS_SESSION.add(key)
             return {"stored": True, "cache_key": key, "summary_type": "ai"}
         except Exception as exc:  # noqa: BLE001
             return {"stored": False, "error": str(exc)}
 
     @mcp.tool()
-    def find_relevant_files(task: str) -> list[dict[str, Any]]:
+    def get_audit_log(file_path: str = "", limit: int = 20) -> list[dict[str, Any]]:
+        try:
+            bounded_limit = max(1, min(int(limit), 100))
+            if file_path:
+                rel, _path = _sanitize_path(repo_root, repo_resolved, file_path)
+                if rel is None:
+                    return [{"error": "path outside repository"}]
+                rows = read_conn.execute(
+                    """
+                    SELECT id, event_type, cache_key, file_path, created_by, summary_type, occurred_at
+                    FROM audit_log
+                    WHERE file_path = ?
+                    ORDER BY id DESC
+                    LIMIT ?
+                    """,
+                    (rel, bounded_limit),
+                ).fetchall()
+            else:
+                rows = read_conn.execute(
+                    """
+                    SELECT id, event_type, cache_key, file_path, created_by, summary_type, occurred_at
+                    FROM audit_log
+                    ORDER BY id DESC
+                    LIMIT ?
+                    """,
+                    (bounded_limit,),
+                ).fetchall()
+            return [dict(row) for row in rows]
+        except Exception as exc:  # noqa: BLE001 - MCP tools must report errors as data.
+            return [{"error": str(exc)}]
+
+    @mcp.tool()
+    async def find_relevant_files(task: str) -> list[dict[str, Any]]:
         try:
             if not task or not task.strip():
                 return []
-            semantic = _semantic_results(conn, emb_conn, task, limit=5)
-            keyword = keyword_search(conn, task, limit=5)
-            return _merge_relevance_results(semantic, keyword, limit=5)
+            semantic = _semantic_results(read_conn, emb_conn, task, limit=5)
+            keyword = keyword_search(read_conn, task, limit=5)
+            results = _merge_relevance_results(semantic, keyword, limit=5)
+            if config.scope_paths:
+                results = [r for r in results if any(r["file_path"].startswith(p) for p in config.scope_paths)]
+            mtimes = await asyncio.gather(
+                *[_git_mtime(repo_root, r["file_path"]) for r in results]
+            )
+            for result, mtime in zip(results, mtimes):
+                result["last_modified"] = mtime
+            results.sort(key=lambda r: r.get("quality_score") or 0.0, reverse=True)
+            used_semantic = len(semantic) > 0
+            search_mode = "semantic+keyword" if used_semantic else "keyword_only"
+            return [{"search_mode": search_mode, **r} for r in results]
         except Exception as exc:  # noqa: BLE001 - MCP tools must report errors as data.
             import sys
             print(f"warning: find_relevant_files failed: {exc}", file=sys.stderr)
@@ -205,7 +283,7 @@ def run_server() -> None:
             rel, path = _sanitize_path(repo_root, repo_resolved, file_path)
             if rel is None or path is None:
                 return {"error": "path outside repository"}
-            obj = get_symbol_by_path(conn, rel)
+            obj = get_symbol_by_path(read_conn, rel)
             if not obj or not path.is_file():
                 return {
                     "symbols": None,
@@ -240,8 +318,8 @@ def run_server() -> None:
             if not symbol_name or not symbol_name.strip():
                 return []
             results = []
-            for result in find_symbol_by_name(conn, symbol_name, limit=10):
-                obj = get_symbol(conn, result["cache_key"])
+            for result in find_symbol_by_name(read_conn, symbol_name, limit=10):
+                obj = get_symbol(read_conn, result["cache_key"])
                 results.append(
                     {
                         "file_path": result["file_path"],
@@ -257,25 +335,28 @@ def run_server() -> None:
             return [{"error": str(exc)}]
 
     @mcp.tool()
-    def get_changed_context(since_branch: str = "main") -> dict[str, Any]:
+    async def get_changed_context(since_branch: str = "main") -> dict[str, Any]:
         try:
-            result = subprocess.run(
-                ["git", "diff", "--name-only", f"{since_branch}...HEAD"],
+            proc = await asyncio.create_subprocess_exec(
+                "git", "diff", "--name-only", f"{since_branch}...HEAD",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
                 cwd=repo_root,
-                capture_output=True,
-                text=True,
-                check=False,
             )
+            stdout, _ = await proc.communicate()
         except OSError:
             return {"error": "git diff failed", "since_branch": since_branch}
-        if result.returncode != 0:
+        if proc.returncode != 0:
             return {"error": "git diff failed", "since_branch": since_branch}
+
+        rels = [line for line in stdout.decode().splitlines() if line.strip()]
+        mtimes = await asyncio.gather(*[_git_mtime(repo_root, rel) for rel in rels])
 
         changed_files = []
         files_needing_review = []
         ai_count = 0
-        for rel in [line.strip() for line in result.stdout.splitlines() if line.strip()]:
-            obj = get_summary_by_path(conn, rel)
+        for rel, mtime in zip(rels, mtimes):
+            obj = get_summary_by_path(read_conn, rel)
             summary_type = obj["summary_type"] if obj else None
             has_ai_summary = summary_type == "ai"
             has_static_summary = summary_type == "static"
@@ -289,6 +370,7 @@ def run_server() -> None:
                     "summary_type": summary_type,
                     "has_ai_summary": has_ai_summary,
                     "has_static_summary": has_static_summary,
+                    "last_modified": mtime,
                 }
             )
         total = len(changed_files)
@@ -299,11 +381,47 @@ def run_server() -> None:
             "ai_coverage": f"{ai_count} of {total} changed files have AI summaries",
         }
 
+    @mcp.tool()
+    def get_dependents(file_path: str) -> dict[str, Any]:
+        try:
+            repomap_path = repo_root / ".teamcache" / "objects" / "repomap.json"
+            if not repomap_path.exists():
+                return {"error": "repomap not built yet, run: teamcache index"}
+            repomap = json.loads(repomap_path.read_text(encoding="utf-8"))
+            dependents = repomap.get("reverse_imports", {}).get(file_path, [])
+            results = []
+            for dep_path in dependents:
+                obj = get_summary_by_path(read_conn, dep_path)
+                results.append({
+                    "file_path": dep_path,
+                    "summary": obj["summary"] if obj else None,
+                    "summary_type": obj["summary_type"] if obj else None,
+                })
+            return {"file_path": file_path, "dependents": results, "count": len(results)}
+        except Exception as exc:  # noqa: BLE001 - MCP tools must report errors as data.
+            return {"error": str(exc)}
+
     try:
         mcp.run(transport="stdio")
     finally:
-        conn.close()
+        read_conn.close()
+        write_conn.close()
         emb_conn.close()
+
+
+async def _git_mtime(repo_root: Path, file_path: str) -> str | None:
+    """Return the ISO timestamp of the most recent git commit touching file_path, or None."""
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "git", "log", "--format=%ci", "-1", "--", file_path,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
+            cwd=repo_root,
+        )
+        stdout, _ = await proc.communicate()
+        return stdout.decode().strip() or None
+    except OSError:
+        return None
 
 
 def _summary_confidence(created_at: str | None) -> str:
@@ -326,6 +444,43 @@ def _summary_confidence(created_at: str | None) -> str:
 
 
 def _repo_overview(repo_root: Path, conn: Any) -> str:
+    repomap = _read_repomap(repo_root)
+    if repomap is None:
+        return _repo_overview_from_scan(repo_root, conn)
+
+    tree = _tree_from_repomap(repo_root, repomap)
+    raw_languages = repomap.get("languages", {})
+    language_counts = raw_languages if isinstance(raw_languages, dict) else {}
+    total_on_disk = _repomap_total_files(repomap, language_counts)
+    languages = "\n".join(
+        f"- {suffix}: {count}"
+        for suffix, count in sorted(language_counts.items(), key=lambda item: item[1], reverse=True)
+    )
+    coverage = count_by_type(conn)
+    top_modules = _top_module_lines(repomap.get("top_symbols", []))
+    entry_points = repomap.get("entry_points", [])
+    entry_lines = [
+        f"- {entry}"
+        for entry in entry_points
+        if isinstance(entry, str) and entry
+    ] if isinstance(entry_points, list) else []
+
+    sections = [
+        "## Directory Structure\n"
+        f"{tree}",
+        "## Languages\n"
+        f"{languages or '- none found'}",
+        "## Summary Coverage\n"
+        f"{coverage['ai']} ai, {coverage['static']} static, {coverage['total']} indexed of {total_on_disk} total files",
+    ]
+    if top_modules:
+        sections.append("## Top Modules\n" + "\n".join(top_modules))
+    if entry_lines:
+        sections.append("## Entry Points\n" + "\n".join(entry_lines))
+    return "\n\n".join(sections)
+
+
+def _repo_overview_from_scan(repo_root: Path, conn: Any) -> str:
     tree, language_counts = _repo_scan(repo_root)
     total_on_disk = sum(language_counts.values())
     languages = "\n".join(
@@ -348,6 +503,92 @@ def _repo_overview(repo_root: Path, conn: Any) -> str:
         "## Entry Points\n"
         f"{entry_text}"
     )
+
+
+def _read_repomap(repo_root: Path) -> dict[str, Any] | None:
+    repomap_path = repo_root / ".teamcache" / "objects" / "repomap.json"
+    if not repomap_path.exists():
+        return None
+    try:
+        repomap = json.loads(repomap_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return repomap if isinstance(repomap, dict) else None
+
+
+def _repomap_total_files(repomap: dict[str, Any], language_counts: dict[str, Any]) -> int:
+    total = repomap.get("total_files")
+    if isinstance(total, int):
+        return total
+    return sum(count for count in language_counts.values() if isinstance(count, int))
+
+
+def _top_module_lines(top_symbols: Any) -> list[str]:
+    if not isinstance(top_symbols, list):
+        return []
+    lines: list[str] = []
+    seen_paths: set[str] = set()
+    for item in top_symbols:
+        if not isinstance(item, dict):
+            continue
+        file_path = item.get("file_path")
+        if not isinstance(file_path, str) or not file_path or file_path in seen_paths:
+            continue
+        language = item.get("language")
+        language_text = language if isinstance(language, str) and language else "unknown"
+        lines.append(f"- {file_path} ({language_text})")
+        seen_paths.add(file_path)
+        if len(lines) == 10:
+            break
+    return lines
+
+
+def _tree_from_repomap(repo_root: Path, repomap: dict[str, Any]) -> str:
+    paths = _repomap_paths(repomap)
+    if not paths:
+        return repo_root.name + "/"
+
+    root: dict[str, Any] = {}
+    for path in sorted(paths):
+        current = root
+        parts = [part for part in Path(path).parts if part not in {"", "."}]
+        for part in parts:
+            current = current.setdefault(part, {})
+
+    lines = [repo_root.name + "/"]
+    _append_tree_lines(lines, root, depth=1)
+    return "\n".join(lines)
+
+
+def _repomap_paths(repomap: dict[str, Any]) -> set[str]:
+    paths: set[str] = set()
+    top_symbols = repomap.get("top_symbols", [])
+    if isinstance(top_symbols, list):
+        for item in top_symbols:
+            if isinstance(item, dict) and isinstance(item.get("file_path"), str):
+                paths.add(item["file_path"])
+
+    entry_points = repomap.get("entry_points", [])
+    if isinstance(entry_points, list):
+        paths.update(entry for entry in entry_points if isinstance(entry, str))
+
+    reverse_imports = repomap.get("reverse_imports", {})
+    if isinstance(reverse_imports, dict):
+        for file_path, importers in reverse_imports.items():
+            if isinstance(file_path, str):
+                paths.add(file_path)
+            if isinstance(importers, list):
+                paths.update(importer for importer in importers if isinstance(importer, str))
+    return paths
+
+
+def _append_tree_lines(lines: list[str], node: dict[str, Any], depth: int) -> None:
+    indent = "  " * depth
+    for name, child in sorted(node.items()):
+        suffix = "/" if child else ""
+        lines.append(f"{indent}{name}{suffix}")
+        if child:
+            _append_tree_lines(lines, child, depth + 1)
 
 
 def _repo_scan(repo_root: Path) -> tuple[str, dict[str, int]]:
