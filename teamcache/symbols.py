@@ -42,6 +42,8 @@ def extract_symbols(path: Path, language: str, text: str) -> dict[str, Any]:
         _extract_kotlin(root, source, symbols)
     elif language == "php":
         _extract_php(root, source, symbols)
+    elif language in {"cpp", "c"}:
+        _extract_cpp(root, source, symbols)
     else:
         return _fallback_symbols(path, language, text)
     return _dedupe_symbols(symbols)
@@ -84,6 +86,8 @@ def _get_parser(language: str) -> Any | None:
         "ruby",
         "kotlin",
         "php",
+        "cpp",
+        "c",
     }:
         return None
     try:
@@ -102,6 +106,8 @@ def _get_parser(language: str) -> Any | None:
         "ruby": ("tree_sitter_ruby", "ruby"),
         "kotlin": ("tree_sitter_kotlin", "kotlin"),
         "php": ("tree_sitter_php", "php"),
+        "cpp": ("tree_sitter_cpp", "cpp"),
+        "c": ("tree_sitter_cpp", "cpp"),
     }[language]
     try:
         module = __import__(module_name)
@@ -146,7 +152,7 @@ def _extract_python(root: Any, source: bytes, symbols: dict[str, Any]) -> None:
             name = _node_name(node, source)
             if name:
                 methods = [
-                    {"name": method_name, "line": method.start_point[0] + 1}
+                    {"name": method_name, "line": method.start_point[0] + 1, "end_line": method.end_point[0] + 1}
                     for method in _walk(node)
                     if method.type == "function_definition"
                     for method_name in [_node_name(method, source)]
@@ -184,7 +190,7 @@ def _extract_js_ts(root: Any, source: bytes, symbols: dict[str, Any]) -> None:
             name = _node_name(node, source)
             if name:
                 methods = [
-                    {"name": method_name, "line": method.start_point[0] + 1}
+                    {"name": method_name, "line": method.start_point[0] + 1, "end_line": method.end_point[0] + 1}
                     for method in _walk(node)
                     if method.type == "method_definition"
                     for method_name in [_node_name(method, source)]
@@ -237,7 +243,7 @@ def _extract_java(root: Any, source: bytes, symbols: dict[str, Any]) -> None:
             name = _node_name(node, source)
             if name:
                 methods = [
-                    {"name": method_name, "line": method.start_point[0] + 1}
+                    {"name": method_name, "line": method.start_point[0] + 1, "end_line": method.end_point[0] + 1}
                     for method in _walk(node)
                     if method.type == "method_declaration"
                     for method_name in [_node_name(method, source)]
@@ -275,7 +281,7 @@ def _extract_csharp(root: Any, source: bytes, symbols: dict[str, Any]) -> None:
             name = _node_name(node, source)
             if name:
                 methods = [
-                    {"name": method_name, "line": method.start_point[0] + 1}
+                    {"name": method_name, "line": method.start_point[0] + 1, "end_line": method.end_point[0] + 1}
                     for method in _walk(node)
                     if method.type == "method_declaration"
                     for method_name in [_node_name(method, source)]
@@ -344,6 +350,53 @@ def _extract_php(root: Any, source: bytes, symbols: dict[str, Any]) -> None:
                 symbols["imports"].extend(import_names)
 
 
+def _extract_cpp(root: Any, source: bytes, symbols: dict[str, Any]) -> None:
+    """Extract symbols from C and C++ source files.
+
+    Handles:
+    - #include directives  → imports
+    - using declarations   → imports
+    - class/struct/union   → classes (with methods from field_declaration nodes)
+    - function_definition  → functions (including template and scoped like Foo::bar)
+    """
+    for node in _walk(root):
+        if node.type == "preproc_include":
+            include_name = _cpp_include_name(node, source)
+            if include_name:
+                symbols["imports"].append(include_name)
+        elif node.type == "using_declaration":
+            using_name = _cpp_using_name(node, source)
+            if using_name:
+                symbols["imports"].append(using_name)
+        elif node.type in {"class_specifier", "struct_specifier", "union_specifier"}:
+            name_node = node.child_by_field_name("name")
+            if name_node:
+                cname = _text(name_node, source).strip()
+                if cname:
+                    methods = [
+                        {
+                            "name": mname,
+                            "line": fn_decl.start_point[0] + 1,
+                            "end_line": fn_decl.end_point[0] + 1,
+                        }
+                        for child in _walk(node)
+                        if child.type == "field_declaration"
+                        for fn_decl in child.children
+                        if fn_decl.type == "function_declarator"
+                        for d in [fn_decl.child_by_field_name("declarator")]
+                        if d is not None
+                        for mname in [_text(d, source).strip()]
+                        if mname
+                    ]
+                    symbols["classes"].append(
+                        {"name": cname, "line": node.start_point[0] + 1, "methods": methods}
+                    )
+        elif node.type == "function_definition":
+            fname = _cpp_function_name(node, source)
+            if fname:
+                symbols["functions"].append(_function_obj(fname, node, source))
+
+
 def _fallback_symbols(path: Path, language: str, text: str) -> dict[str, Any]:
     summary = static_summary(path, language, text)
     symbols = _empty_symbols()
@@ -365,7 +418,33 @@ def _fallback_symbols(path: Path, language: str, text: str) -> dict[str, Any]:
 
 
 def _function_obj(name: str, node: Any, source: bytes) -> dict[str, Any]:
-    return {"name": name, "line": node.start_point[0] + 1, "signature": _first_line(node, source)}
+    call_types = {
+        "call", "call_expression", "method_invocation",
+        "invocation_expression", "function_call_expression",
+    }
+    call_field_names = ("function", "method", "name", "expression",
+                        "calleeExpression")
+    seen: set[str] = set()
+    calls: list[str] = []
+    for child in _walk(node):
+        if child.type in call_types:
+            for field_name in call_field_names:
+                callee = child.child_by_field_name(field_name)
+                if callee:
+                    raw = _text(callee, source).strip()
+                    # take the last dotted component: "self.db.query" -> "query"
+                    part = raw.split(".")[-1].split("(")[0].strip()
+                    if part and part.isidentifier() and part not in seen:
+                        seen.add(part)
+                        calls.append(part)
+                    break
+    return {
+        "name": name,
+        "line": node.start_point[0] + 1,
+        "end_line": node.end_point[0] + 1,
+        "signature": _first_line(node, source),
+        "calls": calls,
+    }
 
 
 def _node_name(node: Any, source: bytes) -> str | None:
@@ -444,6 +523,62 @@ def _php_namespace_use_names(node: Any, source: bytes) -> list[str]:
         if cleaned:
             imports.append(cleaned)
     return imports
+
+
+def _cpp_include_name(node: Any, source: bytes) -> str | None:
+    """Extract the header name from a #include directive.
+
+    Returns the bare name without angle brackets or quotes,
+    e.g. 'iostream' or 'mylib/utils.h'.
+    """
+    text = _text(node, source).strip()
+    match = re.search(r"<([^>]+)>|\"([^\"]+)\"", text)
+    if match:
+        return (match.group(1) or match.group(2)).strip()
+    return None
+
+
+def _cpp_using_name(node: Any, source: bytes) -> str | None:
+    """Extract the identifier from a using declaration/directive.
+
+    Strips 'using namespace ' / 'using ' prefix and trailing semicolons.
+    e.g. 'using namespace std;'  -> 'std'
+         'using MyApp::Helper;' -> 'MyApp::Helper'
+    """
+    text = _text(node, source).strip().rstrip(";")
+    match = re.match(r"using\s+(?:namespace\s+)?(.+)", text)
+    return match.group(1).strip() if match else None
+
+
+def _cpp_function_name(node: Any, source: bytes) -> str | None:
+    """Extract the function name from a function_definition node.
+
+    Handles plain functions, scoped definitions (Foo::bar),
+    destructors (~Foo), and template functions.
+    Walks into nested declarators to find the innermost function_declarator.
+    """
+    decl = node.child_by_field_name("declarator")
+    if decl is None:
+        return None
+    # template_declaration wraps an inner function_definition; skip this level
+    if decl.type == "template_declaration":
+        return None
+    # Find the innermost function_declarator (may be nested inside
+    # pointer_declarator, reference_declarator, etc.)
+    fn_decl = (
+        decl
+        if decl.type == "function_declarator"
+        else next(
+            (c for c in _walk(decl) if c.type == "function_declarator"),
+            None,
+        )
+    )
+    if fn_decl is None:
+        return None
+    name_node = fn_decl.child_by_field_name("declarator")
+    if name_node is None:
+        return None
+    return _text(name_node, source).strip() or None
 
 
 def _go_receiver(node: Any, source: bytes) -> str | None:

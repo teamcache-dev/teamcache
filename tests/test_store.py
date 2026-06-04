@@ -7,6 +7,7 @@ import pytest
 
 from teamcache.store import GitObjectStore, make_store
 from teamcache.config import TeamCacheConfig
+from teamcache.constants import SYMBOL_SCHEMA_VERSION
 
 
 # ---------------------------------------------------------------------------
@@ -125,7 +126,7 @@ def test_write_symbol_creates_file(tmp_path):
     key = "i" * 64
     obj = _symbol_obj(key)
     store.write_symbol(key, obj)
-    expected = tmp_path / "symbols" / key[:2] / f"{key[:12]}_v1.json"
+    expected = tmp_path / "symbols" / key[:2] / f"{key[:12]}_{SYMBOL_SCHEMA_VERSION}.json"
     assert expected.exists()
 
 
@@ -147,7 +148,7 @@ def test_read_symbol_bad_symbols_field_returns_none(tmp_path):
     key = "l" * 64
     obj = _symbol_obj(key)
     obj["symbols"] = "not-a-dict"
-    path = tmp_path / "symbols" / key[:2] / f"{key[:12]}_v1.json"
+    path = tmp_path / "symbols" / key[:2] / f"{key[:12]}_{SYMBOL_SCHEMA_VERSION}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(obj), encoding="utf-8")
     assert store.read_symbol(key) is None

@@ -140,3 +140,34 @@ def test_php_extracts_namespace_use_declarations() -> None:
         "App\\Models\\User",
         "App\\Models\\Team",
     ]
+
+
+def test_function_obj_has_end_line() -> None:
+    sym = _extract("python", "py", "def foo(x):\n    return x + 1\n")
+    fn = next(f for f in sym["functions"] if f["name"] == "foo")
+    assert "end_line" in fn
+    assert fn["end_line"] >= fn["line"]
+
+
+def test_function_obj_has_calls() -> None:
+    sym = _extract("python", "py",
+        "def bar():\n    result = foo(1)\n    return result\n")
+    fn = next(f for f in sym["functions"] if f["name"] == "bar")
+    assert "calls" in fn
+    assert "foo" in fn["calls"]
+
+
+def test_calls_not_in_symbol_names() -> None:
+    """outgoing_calls at top level must not pollute FTS symbol index."""
+    from teamcache.db import _symbol_names
+    symbols = {
+        "functions": [
+            {"name": "authenticate", "line": 1, "end_line": 5,
+             "signature": "def authenticate():", "calls": ["db_query", "hash_pw"]},
+        ],
+        "classes": [], "imports": [], "exports": [],
+    }
+    result = _symbol_names(symbols)
+    assert "db_query" not in result
+    assert "hash_pw" not in result
+    assert "authenticate" in result

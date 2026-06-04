@@ -127,3 +127,16 @@ def test_reverse_imports_no_duplicates(repo):
     ri = _repomap(repo)["reverse_imports"]
     if "lib.py" in ri:
         assert ri["lib.py"].count("consumer.py") == 1
+
+
+def test_reverse_imports_populated_after_index(repo) -> None:
+    runner = CliRunner()
+    _add_tracked(repo, "utils.py",
+        "def helper():\n    return 42\n")
+    _add_tracked(repo, "main.py",
+        "from utils import helper\n\ndef run():\n    return helper()\n")
+    _init_and_index(repo, runner)
+    rm = _repomap(repo)
+    ri = rm.get("reverse_imports", {})
+    assert "utils.py" in ri, f"expected utils.py in reverse_imports, got: {list(ri.keys())}"
+    assert "main.py" in ri["utils.py"]

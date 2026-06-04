@@ -7,6 +7,7 @@ INDEX_DB = ".teamcache/local/index.sqlite"
 EMBEDDINGS_DB = ".teamcache/local/embeddings.sqlite"
 CONFIG_FILE = ".teamcache/config.yaml"
 SCHEMA_VERSION = "v2"
+SYMBOL_SCHEMA_VERSION = "vs1"
 MAX_FILE_BYTES = 500 * 1024
 
 # Deprecated: iter_repo_files now uses git ls-files instead of os.walk.

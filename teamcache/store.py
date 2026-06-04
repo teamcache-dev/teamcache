@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
-from .constants import SUMMARIES_DIR, SYMBOLS_DIR
+from .constants import SUMMARIES_DIR, SYMBOLS_DIR, SYMBOL_SCHEMA_VERSION
 
 
 @runtime_checkable
@@ -26,7 +26,7 @@ class GitObjectStore:
         return self._summaries_root / key[:2] / f"{key[:12]}_v1.json"
 
     def _symbol_path(self, key: str) -> Path:
-        return self._symbols_root / key[:2] / f"{key[:12]}_v1.json"
+        return self._symbols_root / key[:2] / f"{key[:12]}_{SYMBOL_SCHEMA_VERSION}.json"
 
     def read(self, key: str) -> dict | None:
         """Read a summary object by cache key. Returns None if not found or malformed."""

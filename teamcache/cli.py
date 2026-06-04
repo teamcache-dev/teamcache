@@ -23,6 +23,7 @@ from .constants import (
     LANGUAGE_BY_SUFFIX,
     LOCAL_DIR,
     SCHEMA_VERSION,
+    SYMBOL_SCHEMA_VERSION,
     SUMMARIES_DIR,
     SYMBOLS_DIR,
 )
@@ -1220,11 +1221,12 @@ def _index_file(
         return None
 
     fhash = file_hash(content)
-    key = cache_key(fhash, schema_version)
+    summary_key = cache_key(fhash, schema_version)
+    symbol_key  = cache_key(fhash, SYMBOL_SCHEMA_VERSION)
     language = LANGUAGE_BY_SUFFIX.get(path.suffix.lower(), "unknown")
     rel_path = path.resolve().relative_to(root.resolve()).as_posix()
-    existing_summary = get_summary(conn, key)
-    existing_symbol = get_symbol(conn, key)
+    existing_summary = get_summary(conn, summary_key)
+    existing_symbol = get_symbol(conn, symbol_key)
     summary_needs_upsert = (
         existing_summary is None or existing_summary.get("file_path") != rel_path
     )
@@ -1233,7 +1235,7 @@ def _index_file(
         return {"skipped": True}
 
     text = content.decode("utf-8", errors="ignore")
-    disk_symbol_obj = store.read_symbol(key)
+    disk_symbol_obj = store.read_symbol(symbol_key)
     symbols = (
         disk_symbol_obj.get("symbols", {})
         if isinstance(disk_symbol_obj, dict)
@@ -1243,7 +1245,7 @@ def _index_file(
         symbols = extract_symbols(path, language, text)
     summary = summary_from_symbols(symbols, language)
     created_at = datetime.utcnow().isoformat() + "Z"
-    disk_summary_obj = store.read(key)
+    disk_summary_obj = store.read(summary_key)
     summary_obj = _summary_object_for_path(
         disk_summary_obj,
         rel_path,
@@ -1251,7 +1253,7 @@ def _index_file(
         len(content),
         language,
     ) or {
-        "cache_key": key,
+        "cache_key": summary_key,
         "file_path": rel_path,
         "file_hash": fhash,
         "summary": summary,
@@ -1262,30 +1264,48 @@ def _index_file(
         "file_size_bytes": len(content),
         "language": language,
     }
+    # Collect outgoing_calls from all functions and class methods
+    all_calls: list[str] = []
+    seen_calls: set[str] = set()
+    for fn in symbols.get("functions", []):
+        for c in fn.get("calls", []):
+            if c not in seen_calls:
+                seen_calls.add(c)
+                all_calls.append(c)
+    for cls in symbols.get("classes", []):
+        for method in cls.get("methods", []):
+            if isinstance(method, dict):
+                for c in method.get("calls", []):
+                    if c not in seen_calls:
+                        seen_calls.add(c)
+                        all_calls.append(c)
     symbol_obj = _symbol_object_for_path(disk_symbol_obj, rel_path, fhash, language) or {
-        "cache_key": key,
+        "cache_key": symbol_key,
         "file_path": rel_path,
         "file_hash": fhash,
-        "schema_version": schema_version,
+        "schema_version": SYMBOL_SCHEMA_VERSION,
         "language": language,
         "symbols": symbols,
+        "outgoing_calls": all_calls,
         "created_at": created_at,
         "created_by": created_by,
     }
+    if "outgoing_calls" not in symbol_obj:
+        symbol_obj["outgoing_calls"] = all_calls
     if summary_needs_upsert:
         if disk_summary_obj is None:
-            store.write(key, summary_obj)
+            store.write(summary_key, summary_obj)
         insert_summary(conn, summary_obj)
         upsert_embedding(
             emb_conn,
-            key,
+            summary_key,
             rel_path,
             str(summary_obj["summary"]),
             str(summary_obj["summary_type"]),
         )
     if symbol_needs_upsert:
         if disk_symbol_obj is None:
-            store.write_symbol(key, symbol_obj)
+            store.write_symbol(symbol_key, symbol_obj)
         insert_symbol(conn, symbol_obj)
     return {
         "skipped": False,
@@ -1369,6 +1389,21 @@ def _write_repomap(root: Path) -> None:
                         reverse_imports[resolved_path].append(importer)
                     break
 
+    # Pass 2b — call_graph (symbol-level call graph)
+    call_graph: dict[str, list[str]] = {}
+    for obj in symbol_objects:
+        caller_file = str(obj.get("file_path", ""))
+        if not caller_file:
+            continue
+        for call_name in obj.get("outgoing_calls", []):
+            for lookup_key in _import_lookup_keys(call_name):
+                resolved_path, _ = definition_locations.get(lookup_key, ("", ""))
+                if resolved_path and resolved_path != caller_file:
+                    call_graph.setdefault(caller_file, [])
+                    if resolved_path not in call_graph[caller_file]:
+                        call_graph[caller_file].append(resolved_path)
+                    break
+
     top_symbols = []
     for name, _count in imports.most_common(50):
         file_path = ""
@@ -1389,6 +1424,7 @@ def _write_repomap(root: Path) -> None:
         "entry_points": sorted(entry for entry in ENTRY_POINTS if (root / entry).exists()),
         "top_symbols": top_symbols,
         "reverse_imports": reverse_imports,
+        "call_graph": call_graph,
     }
     _atomic_write_text(
         root / ".teamcache" / "objects" / "repomap.json",

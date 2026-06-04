@@ -338,6 +338,129 @@ def run_server() -> None:
             return {"error": str(exc)}
 
     @mcp.tool()
+    def get_file_symbols(file_path: str) -> dict[str, Any]:
+        """Return all symbols (functions, classes, methods) with line
+        numbers and signatures. Use before get_symbol_source() to find
+        the exact symbol name. Does not return source code."""
+        try:
+            rel, path = _sanitize_path(repo_root, repo_resolved, file_path)
+            if rel is None or path is None:
+                return {"error": "path outside repository"}
+            obj = get_symbol_by_path(read_conn, rel)
+            if not obj:
+                return {
+                    "cached": False,
+                    "file_path": file_path,
+                    "note": "No symbol index for this file. Run: teamcache index",
+                }
+            stale = False
+            if path.is_file():
+                try:
+                    stale = file_hash(path.read_bytes()) != obj["file_hash"]
+                except OSError:
+                    pass
+            return {
+                "cached": True,
+                "stale": stale,
+                "file_path": rel,
+                "language": obj.get("language", "unknown"),
+                "functions": [
+                    {
+                        "name": fn["name"],
+                        "line": fn.get("line"),
+                        "end_line": fn.get("end_line"),
+                        "signature": fn.get("signature", ""),
+                    }
+                    for fn in obj["symbols"].get("functions", [])
+                ],
+                "classes": [
+                    {
+                        "name": cls["name"],
+                        "line": cls.get("line"),
+                        "methods": [
+                            {
+                                "name": m["name"] if isinstance(m, dict) else str(m),
+                                "line": m.get("line") if isinstance(m, dict) else None,
+                                "end_line": m.get("end_line") if isinstance(m, dict) else None,
+                            }
+                            for m in cls.get("methods", [])
+                        ],
+                    }
+                    for cls in obj["symbols"].get("classes", [])
+                ],
+            }
+        except Exception as exc:  # noqa: BLE001
+            return {"error": str(exc)}
+
+    @mcp.tool()
+    def get_symbol_source(file_path: str, symbol_name: str) -> dict[str, Any]:
+        """Return source lines for one named function or method.
+        Call get_file_symbols() first to confirm the name exists.
+        Returns only that function's lines, not the whole file."""
+        try:
+            rel, path = _sanitize_path(repo_root, repo_resolved, file_path)
+            if rel is None or path is None:
+                return {"error": "path outside repository"}
+            if not path.is_file():
+                return {"error": "file not found"}
+            obj = get_symbol_by_path(read_conn, rel)
+            if not obj:
+                return {
+                    "cached": False,
+                    "note": "No symbol index. Run teamcache index, then retry.",
+                }
+            # Search functions then class methods
+            match: dict[str, Any] | None = None
+            for fn in obj["symbols"].get("functions", []):
+                if fn.get("name") == symbol_name:
+                    match = fn
+                    break
+            if match is None:
+                for cls in obj["symbols"].get("classes", []):
+                    for method in cls.get("methods", []):
+                        if isinstance(method, dict) and method.get("name") == symbol_name:
+                            match = method
+                            break
+                    if match is not None:
+                        break
+            if match is None:
+                return {
+                    "cached": False,
+                    "symbol_name": symbol_name,
+                    "note": (
+                        f"Symbol '{symbol_name}' not found. "
+                        "Call get_file_symbols() to list available symbols."
+                    ),
+                }
+            start_line = match.get("line")
+            end_line = match.get("end_line")
+            if not start_line or not end_line:
+                return {
+                    "cached": False,
+                    "symbol_name": symbol_name,
+                    "note": (
+                        "Symbol found but no line span available. "
+                        "Re-run teamcache index to upgrade symbol objects, "
+                        "or read the full file."
+                    ),
+                }
+            try:
+                lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+                source = "\n".join(lines[start_line - 1 : end_line])
+            except OSError as e:
+                return {"error": f"could not read file: {e}"}
+            return {
+                "cached": True,
+                "file_path": rel,
+                "symbol_name": symbol_name,
+                "line": start_line,
+                "end_line": end_line,
+                "source": source,
+            }
+        except Exception as exc:  # noqa: BLE001
+            return {"error": str(exc)}
+
+    @mcp.tool()
     def find_by_symbol(symbol_name: str) -> list[dict[str, Any]]:
         try:
             if not symbol_name or not symbol_name.strip():
@@ -408,21 +531,41 @@ def run_server() -> None:
 
     @mcp.tool()
     def get_dependents(file_path: str) -> dict[str, Any]:
+        """Return files that import or call into the given file.
+        Reads reverse_imports (file-level) and call_graph (symbol-level)
+        from repomap.json. Run teamcache index to rebuild the map."""
         try:
             repomap_path = repo_root / ".teamcache" / "objects" / "repomap.json"
             if not repomap_path.exists():
                 return {"error": "repomap not built yet, run: teamcache index"}
             repomap = json.loads(repomap_path.read_text(encoding="utf-8"))
-            dependents = repomap.get("reverse_imports", {}).get(file_path, [])
+            import_deps = repomap.get("reverse_imports", {}).get(file_path, [])
+            call_deps   = repomap.get("call_graph",      {}).get(file_path, [])
+            # merge, deduplicate, preserve order
+            seen: set[str] = set()
+            all_deps: list[str] = []
+            for dep in import_deps + call_deps:
+                if dep not in seen:
+                    seen.add(dep)
+                    all_deps.append(dep)
             results = []
-            for dep_path in dependents:
+            for dep_path in all_deps:
                 obj = get_summary_by_path(read_conn, dep_path)
                 results.append({
                     "file_path": dep_path,
                     "summary": obj["summary"] if obj else None,
                     "summary_type": obj["summary_type"] if obj else None,
+                    "via": (
+                        "import+call" if dep_path in import_deps and dep_path in call_deps
+                        else "import" if dep_path in import_deps
+                        else "call"
+                    ),
                 })
-            return {"file_path": file_path, "dependents": results, "count": len(results)}
+            return {
+                "file_path": file_path,
+                "dependents": results,
+                "count": len(results),
+            }
         except Exception as exc:  # noqa: BLE001 - MCP tools must report errors as data.
             return {"error": str(exc)}
 

@@ -5,6 +5,41 @@ All notable changes to teamcache will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### New Features
+
+- **C / C++ tree-sitter support** — `.c`, `.h`, `.cpp`, `.cc`, `.hpp` files are now fully parsed with `tree-sitter-cpp`. Extracts functions (with line spans, signatures, and outgoing calls), classes/structs/unions (with method lists), and `#include` / `using` imports. `tree-sitter-cpp>=0.21.0` added to `[symbols]` optional dependency group.
+- **`get_file_symbols(path)` MCP tool** — returns all functions and classes with exact `line` / `end_line` numbers and signatures, without returning source code. Intended as a lightweight navigation step before `get_symbol_source()`.
+- **`get_symbol_source(path, symbol_name)` MCP tool** — returns only the source lines for a single named function or method, using the stored line span. Avoids loading the entire file.
+- **`call_graph` in `repomap.json`** — `_write_repomap` now builds a symbol-level call graph (`caller_file → [callee_files]`) from `outgoing_calls` stored on each symbol object and writes it to `repomap.json` alongside `reverse_imports`.
+- **`get_dependents` enhanced** — now merges `reverse_imports` (file-level import graph) and `call_graph` (symbol-level), deduplicates, and annotates each result with a `"via"` field: `"import"`, `"call"`, or `"import+call"`.
+
+### Improvements
+
+- **`SYMBOL_SCHEMA_VERSION = "vs1"`** added to `constants.py`. Symbol objects now use an independently versioned cache key (`cache_key(fhash, SYMBOL_SCHEMA_VERSION)`), separate from summary objects (`SCHEMA_VERSION = "v2"`). Upgrading symbol schema no longer invalidates existing AI summaries.
+- **Symbol objects upgraded** (`symbols.py`):
+  - All function dicts now include `end_line` (end of function body) and `calls` (list of callee names extracted from the AST).
+  - All class method dicts now include `end_line`.
+  - `outgoing_calls` (deduplicated union of all `calls` across functions and methods in a file) is stored at the **top level** of the symbol object — not inside `symbols` — so the FTS index remains clean.
+- **`_write_repomap` 3-pass fix** — repomap generation is now explicitly ordered:
+  1. Pass 1 builds `definition_locations` for all symbols and module aliases.
+  2. Pass 2a builds `reverse_imports` (uses the complete Pass 1 map, fixing the previous ordering bug where some imports weren't resolved).
+  3. Pass 2b builds `call_graph` from `outgoing_calls`.
+  4. Pass 3 builds `top_symbols`.
+- **`_index_file` split cache keys** — `_index_file` in `cli.py` now uses `summary_key` (schema `v2`) and `symbol_key` (schema `vs1`) as separate identifiers for the two object types.
+
+### Migration from v0.2.1
+
+Run after pulling:
+
+```
+teamcache sync
+teamcache index
+```
+
+`teamcache sync` rebuilds the local SQLite index. `teamcache index` regenerates symbol objects under the new `vs1` schema and rebuilds `repomap.json` with the call graph.
+
 ## [0.2.1] - 2026-06-04
 
 ### New Features
