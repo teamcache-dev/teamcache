@@ -1,0 +1,26 @@
+{
+  "cache_key": "383ceefd2fefdcb03cfa8593807a07766bc3018a187d08a9cc0df0a01d608760",
+  "file_path": ".github/workflows/teamcache-pr.yml",
+  "file_hash": "cd384642e22910c2a9be4bdef258df20fb77d8fb2760c228960016bee3ea1178",
+  "schema_version": "v1",
+  "language": "yaml",
+  "symbols": {
+    "functions": [
+      {
+        "name": "cache_prefix",
+        "line": null,
+        "signature": "cache_prefix"
+      },
+      {
+        "name": "has_ai_summary",
+        "line": null,
+        "signature": "has_ai_summary"
+      }
+    ],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "created_at": "2026-06-04T11:26:38.443966Z",
+  "created_by": "unknown"
+}

@@ -1,0 +1,86 @@
+{
+  "cache_key": "04d58c2acee5e6ff061270201352f26770d627c621d0f16873bdf4128846cb0b",
+  "file_path": "tests/test_symbols.py",
+  "file_hash": "03fa1ec88451612b60d12b5721fd78545055d3f01bd971da00a9866dcc86c4ca",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "_extract",
+        "line": null,
+        "signature": "_extract"
+      },
+      {
+        "name": "test_csharp_extracts_classes",
+        "line": null,
+        "signature": "test_csharp_extracts_classes"
+      },
+      {
+        "name": "test_csharp_extracts_class_methods",
+        "line": null,
+        "signature": "test_csharp_extracts_class_methods"
+      },
+      {
+        "name": "test_csharp_extracts_using_directives",
+        "line": null,
+        "signature": "test_csharp_extracts_using_directives"
+      },
+      {
+        "name": "test_ruby_extracts_classes",
+        "line": null,
+        "signature": "test_ruby_extracts_classes"
+      },
+      {
+        "name": "test_ruby_extracts_methods_as_functions",
+        "line": null,
+        "signature": "test_ruby_extracts_methods_as_functions"
+      },
+      {
+        "name": "test_ruby_extracts_require_calls",
+        "line": null,
+        "signature": "test_ruby_extracts_require_calls"
+      },
+      {
+        "name": "test_kotlin_extracts_classes_and_objects",
+        "line": null,
+        "signature": "test_kotlin_extracts_classes_and_objects"
+      },
+      {
+        "name": "test_kotlin_extracts_functions",
+        "line": null,
+        "signature": "test_kotlin_extracts_functions"
+      },
+      {
+        "name": "test_kotlin_extracts_import_headers",
+        "line": null,
+        "signature": "test_kotlin_extracts_import_headers"
+      },
+      {
+        "name": "test_php_extracts_classes_and_interfaces",
+        "line": null,
+        "signature": "test_php_extracts_classes_and_interfaces"
+      },
+      {
+        "name": "test_php_extracts_functions_and_methods",
+        "line": null,
+        "signature": "test_php_extracts_functions_and_methods"
+      },
+      {
+        "name": "test_php_extracts_namespace_use_declarations",
+        "line": null,
+        "signature": "test_php_extracts_namespace_use_declarations"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "pytest",
+      "teamcache.symbols",
+      "__future__",
+      "pathlib"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-06-04T11:26:38.663163Z",
+  "created_by": "unknown"
+}

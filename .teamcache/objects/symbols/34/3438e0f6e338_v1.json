@@ -1,0 +1,15 @@
+{
+  "cache_key": "3438e0f6e33804d1c4fb513ce62756a4d232a6dc2b6339423253fe3541e78481",
+  "file_path": "pyproject.toml",
+  "file_hash": "532d285fb30999576cf921bec07948719b59a04d67a05e9d98de75bdba4bb41a",
+  "schema_version": "v1",
+  "language": "toml",
+  "symbols": {
+    "functions": [],
+    "classes": [],
+    "imports": [],
+    "exports": []
+  },
+  "created_at": "2026-06-04T11:26:38.641053Z",
+  "created_by": "unknown"
+}

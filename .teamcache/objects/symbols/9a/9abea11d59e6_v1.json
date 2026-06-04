@@ -1,0 +1,39 @@
+{
+  "cache_key": "9abea11d59e60e51f38fda8c5f1204909c14f68e9b6d53805c28d19ac1c37f5d",
+  "file_path": "teamcache/store.py",
+  "file_hash": "4ab176688eaae220fda273fd525f73988c79f27b92c72c9ae556222fd7603d0e",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "make_store",
+        "line": null,
+        "signature": "make_store"
+      }
+    ],
+    "classes": [
+      {
+        "name": "ObjectStore",
+        "line": null,
+        "methods": []
+      },
+      {
+        "name": "GitObjectStore",
+        "line": null,
+        "methods": []
+      }
+    ],
+    "imports": [
+      "json",
+      "os",
+      "__future__",
+      "pathlib",
+      "typing",
+      ".constants"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-06-04T11:26:38.652637Z",
+  "created_by": "unknown"
+}

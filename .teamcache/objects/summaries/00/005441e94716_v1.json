@@ -1,0 +1,12 @@
+{
+  "cache_key": "005441e9471663a28366d9ffd159cc03da7915b6236f6ed0793e76de4d6f53cd",
+  "file_path": "teamcache/config.py",
+  "file_hash": "47e42f1daa0b0036813df2cc46bac0fc7f5b23c7267d5e716a06ea3176649aee",
+  "summary": "imports: yaml, __future__, dataclasses, pathlib, .constants | classes: TeamCacheConfig | functions: find_repo_root, load_config, write_config",
+  "summary_type": "static",
+  "schema_version": "v1",
+  "created_at": "2026-06-04T11:26:38.646014Z",
+  "created_by": "unknown",
+  "file_size_bytes": 2940,
+  "language": "python"
+}

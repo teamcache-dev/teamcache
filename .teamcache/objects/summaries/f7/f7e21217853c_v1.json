@@ -1,0 +1,12 @@
+{
+  "cache_key": "f7e21217853cb1f50dd3243fc7af6c467d1f19c91c56baf58410934f9dc9647f",
+  "file_path": "tests/test_store.py",
+  "file_hash": "c6efcc8244a8f1dc9af2ebb3f6e5b04741baa124f20da2014b044a7e07dc0e36",
+  "summary": "imports: json, pytest, __future__, pathlib, teamcache.store, teamcache.config | functions: _store, _summary_obj, _symbol_obj, test_write_creates_file, test_write_content_is_valid_json, test_read_returns_written_object, test_read_missing_key_returns_none, test_read_malformed_json_returns_none, test_read_missing_required_field_returns_none, test_write_raises_without_summary_type, test_write_is_atomic_no_partial_file_on_disk, test_write_symbol_creates_file, test_read_symbol_returns_written_object, test_read_symbol_missing_returns_none, test_read_symbol_bad_symbols_field_returns_none, test_list_returns_written_keys, test_list_empty_when_nothing_written, test_list_prefix_filters, test_make_store_returns_git_store, test_make_store_unknown_backend_raises, test_make_store_git_store_paths",
+  "summary_type": "static",
+  "schema_version": "v1",
+  "created_at": "2026-06-04T11:26:38.661848Z",
+  "created_by": "unknown",
+  "file_size_bytes": 6513,
+  "language": "python"
+}

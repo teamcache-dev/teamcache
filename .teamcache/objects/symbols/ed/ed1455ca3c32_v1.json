@@ -1,0 +1,114 @@
+{
+  "cache_key": "ed1455ca3c3286d3c2450e8f5cb6e9039fa452985044999dd4571292853fd932",
+  "file_path": "teamcache/mcp_server.py",
+  "file_hash": "57735b1f7229c17b16c466a54a5a1aa032793b14e1143d21dbcd984411a51b63",
+  "schema_version": "v1",
+  "language": "python",
+  "symbols": {
+    "functions": [
+      {
+        "name": "run_server",
+        "line": null,
+        "signature": "run_server"
+      },
+      {
+        "name": "_summary_confidence",
+        "line": null,
+        "signature": "_summary_confidence"
+      },
+      {
+        "name": "_repo_overview",
+        "line": null,
+        "signature": "_repo_overview"
+      },
+      {
+        "name": "_repo_overview_from_scan",
+        "line": null,
+        "signature": "_repo_overview_from_scan"
+      },
+      {
+        "name": "_read_repomap",
+        "line": null,
+        "signature": "_read_repomap"
+      },
+      {
+        "name": "_repomap_total_files",
+        "line": null,
+        "signature": "_repomap_total_files"
+      },
+      {
+        "name": "_top_module_lines",
+        "line": null,
+        "signature": "_top_module_lines"
+      },
+      {
+        "name": "_tree_from_repomap",
+        "line": null,
+        "signature": "_tree_from_repomap"
+      },
+      {
+        "name": "_repomap_paths",
+        "line": null,
+        "signature": "_repomap_paths"
+      },
+      {
+        "name": "_append_tree_lines",
+        "line": null,
+        "signature": "_append_tree_lines"
+      },
+      {
+        "name": "_repo_scan",
+        "line": null,
+        "signature": "_repo_scan"
+      },
+      {
+        "name": "_language_counts_from_walk",
+        "line": null,
+        "signature": "_language_counts_from_walk"
+      },
+      {
+        "name": "_semantic_results",
+        "line": null,
+        "signature": "_semantic_results"
+      },
+      {
+        "name": "_merge_relevance_results",
+        "line": null,
+        "signature": "_merge_relevance_results"
+      },
+      {
+        "name": "_symbol_line",
+        "line": null,
+        "signature": "_symbol_line"
+      },
+      {
+        "name": "_sanitize_path",
+        "line": null,
+        "signature": "_sanitize_path"
+      }
+    ],
+    "classes": [],
+    "imports": [
+      "asyncio",
+      "json",
+      "os",
+      "subprocess",
+      "time",
+      "__future__",
+      "datetime",
+      "pathlib",
+      "typing",
+      "mcp.server.fastmcp",
+      ".config",
+      ".constants",
+      ".db",
+      ".embeddings",
+      ".files",
+      ".store",
+      ".secrets"
+    ],
+    "exports": []
+  },
+  "created_at": "2026-06-04T11:26:38.650709Z",
+  "created_by": "unknown"
+}

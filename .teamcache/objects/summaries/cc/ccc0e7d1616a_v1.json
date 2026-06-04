@@ -1,0 +1,12 @@
+{
+  "cache_key": "ccc0e7d1616abffc8ecdad8c4afa7fa409ba721a8f8f2e3fb6e96046157a7a5d",
+  "file_path": "teamcache/symbols.py",
+  "file_hash": "fbadcea5bebdd116ecd5406e906abf231d96dbd4cc61793999ccbc58922bd886",
+  "summary": "imports: json, os, re, __future__, pathlib, typing, .files | functions: extract_symbols, write_symbol_object, summary_from_symbols, _empty_symbols, _get_parser, _extract_python, _extract_js_ts, _extract_go, _extract_java, _extract_rust, _extract_csharp, _extract_ruby, _extract_kotlin, _extract_php, _fallback_symbols, _function_obj, _node_name, _python_import_name, _java_import_name, _rust_use_name, _csharp_using_name, _ruby_require_name, _kotlin_import_name, _php_namespace_use_names, _go_receiver, _exported_name, _string_child_value, _field, _decorated_definition, _walk, _nodes_of_type, _text, _first_line, _strip_quotes, _append, _string_values, _named_values, _dedupe_symbols, _unique",
+  "summary_type": "static",
+  "schema_version": "v1",
+  "created_at": "2026-06-04T11:26:38.654502Z",
+  "created_by": "unknown",
+  "file_size_bytes": 21398,
+  "language": "python"
+}
