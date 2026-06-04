@@ -1,12 +1,12 @@
 {
   "schema_version": "v1",
-  "generated_at": "2026-06-04T11:30:07.151518Z",
-  "total_files": 644,
+  "generated_at": "2026-06-04T11:46:16.048642Z",
+  "total_files": 1395,
   "languages": {
     "javascript": 1,
-    "json": 548,
+    "json": 1297,
     "markdown": 9,
-    "python": 63,
+    "python": 65,
     "toml": 4,
     "unknown": 7,
     "yaml": 12
@@ -59,6 +59,11 @@
       "language": "python"
     },
     {
+      "name": ".store",
+      "file_path": "teamcache/store.py",
+      "language": "python"
+    },
+    {
       "name": "connect",
       "file_path": "teamcache/db.py",
       "language": "python"
@@ -91,11 +96,6 @@
     {
       "name": "teamcache.files",
       "file_path": "teamcache/files.py",
-      "language": "python"
-    },
-    {
-      "name": ".store",
-      "file_path": "teamcache/store.py",
       "language": "python"
     },
     {
