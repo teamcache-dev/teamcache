@@ -727,7 +727,7 @@ def _pick_summary_winner(
     return a
 
 
-_SUPPORTED_AGENTS = ("claude", "codex", "cursor", "opencode", "aider", "windsurf")
+_SUPPORTED_AGENTS = ("claude", "codex", "cursor", "opencode", "aider", "windsurf", "copilot", "roo", "cline")
 
 
 @cli.command()
@@ -997,6 +997,40 @@ def _agent_install(
         )
         console.print("Windsurf: .windsurf/mcp.json written, .windsurfrules updated.")
 
+    elif agent == "copilot":
+        instructions_path = repo_root / ".github" / "copilot-instructions.md"
+        if not dry_run:
+            instructions_path.parent.mkdir(parents=True, exist_ok=True)
+        _append_instructions_block(
+            instructions_path,
+            _CURSORRULES_BLOCK,
+            dry_run=dry_run,
+            print_diff=print_diff,
+        )
+        console.print("Copilot: .github/copilot-instructions.md updated.")
+
+    elif agent == "roo":
+        mcp_config = repo_root / ".roo" / "mcp.json"
+        _write_mcp_json(mcp_config, str(teamcache_bin), dry_run=dry_run, print_diff=print_diff)
+        _append_instructions_block(
+            repo_root / ".roomodes",
+            _CURSORRULES_BLOCK,
+            dry_run=dry_run,
+            print_diff=print_diff,
+        )
+        console.print("Roo Code: .roo/mcp.json written, .roomodes updated.")
+
+    elif agent == "cline":
+        mcp_config = repo_root / ".cline" / "mcp.json"
+        _write_mcp_json(mcp_config, str(teamcache_bin), dry_run=dry_run, print_diff=print_diff)
+        _append_instructions_block(
+            repo_root / ".clinerules",
+            _CURSORRULES_BLOCK,
+            dry_run=dry_run,
+            print_diff=print_diff,
+        )
+        console.print("Cline: .cline/mcp.json written, .clinerules updated.")
+
 
 def _agent_uninstall(
     agent: str,
@@ -1048,6 +1082,20 @@ def _agent_uninstall(
         _remove_mcp_json(repo_root / ".windsurf" / "mcp.json", dry_run=dry_run, print_diff=print_diff)
         _remove_instructions_block(repo_root / ".windsurfrules", dry_run=dry_run, print_diff=print_diff)
         console.print("Windsurf: config removed.")
+
+    elif agent == "copilot":
+        _remove_instructions_block(repo_root / ".github" / "copilot-instructions.md", dry_run=dry_run, print_diff=print_diff)
+        console.print("Copilot: instructions removed.")
+
+    elif agent == "roo":
+        _remove_mcp_json(repo_root / ".roo" / "mcp.json", dry_run=dry_run, print_diff=print_diff)
+        _remove_instructions_block(repo_root / ".roomodes", dry_run=dry_run, print_diff=print_diff)
+        console.print("Roo Code: config removed.")
+
+    elif agent == "cline":
+        _remove_mcp_json(repo_root / ".cline" / "mcp.json", dry_run=dry_run, print_diff=print_diff)
+        _remove_instructions_block(repo_root / ".clinerules", dry_run=dry_run, print_diff=print_diff)
+        console.print("Cline: config removed.")
 
 
 _TEAMCACHE_START = "<!-- TEAMCACHE:START -->"

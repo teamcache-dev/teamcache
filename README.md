@@ -42,6 +42,9 @@ teamcache install --agent codex          # OpenAI Codex CLI
 teamcache install --agent windsurf       # Windsurf
 teamcache install --agent aider          # Aider
 teamcache install --agent opencode       # OpenCode
+teamcache install --agent copilot        # GitHub Copilot Workspace
+teamcache install --agent roo            # Roo Code
+teamcache install --agent cline          # Cline
 teamcache install --dry-run --print-diff # Preview file changes
 
 # 6. Commit the static index to share with your team

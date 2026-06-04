@@ -10,7 +10,9 @@
       "Bash(sed 's/\\(.*$//')",
       "Bash(pip install *)",
       "Bash(teamcache --help)",
-      "Bash(where teamcache *)"
+      "Bash(where teamcache *)",
+      "Bash(git rebase *)",
+      "Bash(git stash *)"
     ]
   }
 }
