@@ -1,12 +1,12 @@
 {
   "schema_version": "v1",
-  "generated_at": "2026-06-04T11:26:38.682528Z",
-  "total_files": 270,
+  "generated_at": "2026-06-04T11:30:07.151518Z",
+  "total_files": 644,
   "languages": {
     "javascript": 1,
-    "json": 175,
+    "json": 548,
     "markdown": 9,
-    "python": 62,
+    "python": 63,
     "toml": 4,
     "unknown": 7,
     "yaml": 12
