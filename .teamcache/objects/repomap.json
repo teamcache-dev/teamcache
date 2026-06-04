@@ -1,11 +1,11 @@
 {
   "schema_version": "v1",
-  "generated_at": "2026-06-04T11:46:16.048642Z",
-  "total_files": 1395,
+  "generated_at": "2026-06-04T11:56:21.030292Z",
+  "total_files": 2899,
   "languages": {
     "javascript": 1,
-    "json": 1297,
-    "markdown": 9,
+    "json": 2800,
+    "markdown": 10,
     "python": 65,
     "toml": 4,
     "unknown": 7,
